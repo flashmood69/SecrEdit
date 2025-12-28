@@ -1,0 +1,17 @@
+{
+  "name": "SecrEdit - Secure URL Editor",
+  "short_name": "SecrEdit",
+  "description": "A secure, client-side encrypted text editor that stores everything in the URL.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

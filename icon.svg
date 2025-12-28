@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#6c5ce7"/>
+  <g transform="scale(-1, 1) translate(-32, 0)">
+    <!-- Lock Shackle -->
+    <path d="M11 14V10c0-2.8 2.2-5 5-5s5 2.2 5 5v4" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <!-- Lock Body -->
+    <path d="M8 14h16v8c0 2.2-1.8 4-4 4h-8c-2.2 0-4-1.8-4-4v-8z" fill="white"/>
+    <!-- Stylized 'S' inside -->
+    <path d="M12 18.5c0-.8.8-1.2 2-1.2s2 .4 2 1.2-1 1.2-2 1.2-2 .4-2 1.2.8 1.2 2 1.2 2-.4 2-1.2" fill="none" stroke="#6c5ce7" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>

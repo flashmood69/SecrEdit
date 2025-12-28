@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure URL Editor</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#6c5ce7">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <style>
+        :root { 
+            --bg: #fff; --text: #333; --accent: #6c5ce7; --sec: #4b4b4b; --status-bg: #f8f9fa; --border: #ddd;
+            --header-text: #fff; --header-bg: var(--accent);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #1a1a1a; --text: #e0e0e0; --sec: #888; --status-bg: #2d2d2d; --border: #444; }
+        }
+        
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+        header { display: flex; flex-direction: column; padding: 15px 20px; background: var(--header-bg); border-bottom: 1px solid rgba(0,0,0,0.1); gap: 15px; color: var(--header-text); }
+        
+        #editor, #preview { flex: 1; padding: 25px; border: none; outline: none; font-size: 18px; line-height: 1.6; background: transparent; color: inherit; }
+        #editor { resize: none; }
+        #preview { display: none; overflow-y: auto; border-left: 1px solid var(--border); }
+        
+        .controls, .btn-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        
+        button { 
+            min-width: 40px; height: 40px; border: none; padding: 4px; border-radius: 4px; cursor: pointer; 
+            font-size: 16px; font-weight: bold; transition: background 0.2s, transform 0.1s; color: white; 
+            display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); 
+        }
+        button:hover { background: rgba(255,255,255,0.25); }
+        button:active { transform: scale(0.95); }
+        
+        .status, .char-count { font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.2; }
+        .char-count { opacity: 0.7; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .strength-meter { 
+            position: absolute; 
+            bottom: -2px; 
+            left: 5px; 
+            right: 5px; 
+            height: 2px; 
+            background: transparent; 
+            border-radius: 2px; 
+            overflow: hidden; 
+        }
+        .strength-bar { height: 100%; width: 0; transition: width 0.3s, background 0.3s; }
+        
+        input#key-input { 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            padding: 5px 35px 5px 10px; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            width: 160px; 
+            height: 40px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            outline: none;
+        }
+        input#key-input::placeholder { color: rgba(255,255,255,0.6); }
+        input#key-input:focus {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* Emoji Picker */
+        .emoji-wrapper { position: relative; }
+        #emoji-popover {
+            display: none; position: absolute; top: 100%; left: 0; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px; grid-template-columns: repeat(6, 40px); gap: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 5px;
+        }
+        #emoji-popover.show { display: grid; }
+        .emoji-item { font-size: 24px; cursor: pointer; border-radius: 4px; background: transparent; border: none; transition: background 0.2s; width: 40px; height: 40px; color: var(--text); }
+        .emoji-item:hover { background: var(--status-bg); transform: scale(1.1); }
+        
+        @media (max-width: 600px) {
+            #emoji-popover { position: fixed; top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 12px 12px 0 0; padding: 15px; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); border-top: 1px solid var(--border); }
+        }
+
+        #toggle-pass { position: absolute; right: 0; width: 30px; background: transparent !important; border: none; color: inherit !important; font-size: 14px; z-index: 10; }
+
+        /* Preview Styles */
+        #preview h1, #preview h2, #preview h3 { margin-top: 0; color: var(--accent); }
+        #preview blockquote { border-left: 4px solid var(--accent); padding-left: 15px; color: var(--sec); margin: 10px 0; }
+        #preview code { background: var(--status-bg); padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+        #preview pre { background: var(--status-bg); padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
+        #preview hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+        #preview table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        #preview th, #preview td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        #preview th { background: var(--status-bg); }
+
+        /* Find & Replace Bar */
+        #find-replace-bar { display: flex; align-items: center; padding: 8px 20px; background: var(--status-bg); border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+        #find-replace-bar.hidden { display: none; }
+        #find-replace-bar input { padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 14px; flex: 1; min-width: 80px; }
+        #find-replace-bar button { padding: 6px 10px; font-size: 14px; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="controls">
+        <form class="input-wrapper" onsubmit="event.preventDefault();">
+            <input type="text" name="username" value="SecrEdit User" autocomplete="username" style="display:none;" aria-hidden="true">
+            <input type="password" id="key-input" placeholder="Secret key..." title="Encryption password" autocomplete="new-password">
+            <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
+            <button id="toggle-pass" title="Show/Hide password" type="button" aria-label="Toggle Password Visibility">👁️</button>
+        </form>
+
+        <span class="status" id="status">Ready</span>
+        <span class="char-count" id="char-count">0 chars</span>
+        <span class="char-count" id="url-count" title="URL length (Browser limits: ~2k-8k)">URL: 0</span>
+    </div>
+    <div class="btn-group">
+        <div class="emoji-wrapper">
+            <button id="emoji-btn" title="Insert emoji" type="button" aria-label="Open Emoji Picker">😊</button>
+            <div id="emoji-popover"></div>
+        </div>
+        <button id="clearBtn" title="New document" aria-label="New Document">📄</button>
+        <button id="exportBtn" title="Download encrypted file (.secredit)" aria-label="Export File">💾</button>
+        <button id="importBtn" title="Open encrypted file (.secredit)" aria-label="Import File">📂</button>
+        <button id="copySecretBtn" title="Copy URL" aria-label="Copy URL">🔗</button>
+        <button id="copyTextBtn" title="Copy text to clipboard" aria-label="Copy Text">📑</button>
+        <button id="pasteBtn" title="Paste text from clipboard" aria-label="Paste Text">📋</button>
+        <button id="findBtn" title="Find and Replace" aria-label="Find and Replace">🔍</button>
+        <button id="previewBtn" title="Toggle Markdown Preview" aria-label="Toggle Preview">MD</button>
+    </div>
+</header>
+
+<div id="find-replace-bar" class="hidden">
+    <input id="find-input" placeholder="Find..." autocomplete="off">
+    <input id="replace-input" placeholder="Replace..." autocomplete="off">
+    <button id="find-next-btn" title="Find Next">⬇️</button>
+    <button id="replace-btn" title="Replace Current">Replace</button>
+    <button id="replace-all-btn" title="Replace All">All</button>
+    <button id="close-find-btn" title="Close" style="background:transparent; color:var(--text); font-size:18px;">✕</button>
+</div>
+
+<div id="main-container" style="flex: 1; display: flex; overflow: hidden; position: relative;">
+     <textarea id="editor" placeholder="Entered text will be encrypted and saved in the URL using the key above."></textarea>
+     <div id="preview"></div>
+ </div>
+
+<script>
+    const $ = id => document.getElementById(id);
+    const editor = $('editor'), preview = $('preview'), status = $('status'), charCount = $('char-count'), urlCount = $('url-count'), keyInput = $('key-input'), strengthBar = $('strength-bar'), togglePass = $('toggle-pass'), emojiBtn = $('emoji-btn'), emojiPopover = $('emoji-popover'), exportBtn = $('exportBtn'), importBtn = $('importBtn'), findBtn = $('findBtn'), previewBtn = $('previewBtn'), pasteBtn = $('pasteBtn'), copyTextBtn = $('copyTextBtn'), copySecretBtn = $('copySecretBtn'), clearBtn = $('clearBtn');
+    const KDF_ITERATIONS = 600000;
+
+    // --- Crypto Worker ---
+    const workerCode = `
+        const toB64 = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+        const fromB64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
+        async function deriveKey(pw, salt, iterations) {
+            const mat = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+            return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, mat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+        }
+        async function compress(data, method) {
+            const stream = new Blob([data]).stream().pipeThrough(method === 'zip' ? new CompressionStream('gzip') : new DecompressionStream('gzip'));
+            return method === 'zip' ? new Uint8Array(await new Response(stream).arrayBuffer()) : new TextDecoder().decode(await new Response(stream).arrayBuffer());
+        }
+        self.onmessage = async ({ data: { type, text, password, data, iterations, id } }) => {
+            try {
+                if (type === 'encrypt') {
+                    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+                    const key = await deriveKey(password, salt, iterations);
+                    const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, await compress(new TextEncoder().encode(text), 'zip'));
+                    const res = new Uint8Array(salt.length + iv.length + enc.byteLength);
+                    res.set(salt); res.set(iv, 16); res.set(new Uint8Array(enc), 28);
+                    self.postMessage({ id, result: toB64(res) });
+                } else {
+                    const buf = new Uint8Array(fromB64(data)), isL = buf.length <= 28;
+                    const salt = isL ? new TextEncoder().encode("static-salt-v1") : buf.slice(0, 16);
+                    const iv = buf.slice(isL ? 0 : 16, isL ? 12 : 28);
+                    const key = await deriveKey(password, salt, iterations);
+                    const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, buf.slice(isL ? 12 : 28));
+                    self.postMessage({ id, result: await compress(dec, 'unzip') });
+                }
+            } catch (e) { self.postMessage({ id, error: e.toString() }); }
+        };
+    `;
+
+    let worker, requestId = 0;
+    const pending = new Map();
+    const initWorker = () => {
+        worker?.terminate();
+        worker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'text/javascript' })));
+        worker.onmessage = ({ data: { id, result, error } }) => {
+            if (!pending.has(id)) return;
+            const { resolve, reject, timeout } = pending.get(id);
+            clearTimeout(timeout); pending.delete(id);
+            error ? reject(error) : resolve(result);
+        };
+        worker.onerror = () => initWorker();
+    };
+    initWorker();
+
+    const callWorker = msg => new Promise((resolve, reject) => {
+        const id = requestId++, timeout = setTimeout(() => (pending.delete(id), reject("Timeout")), 10000);
+        pending.set(id, { resolve, reject, timeout });
+        worker.postMessage({ ...msg, id });
+    });
+
+    const updateCharCount = () => {
+        const len = editor.value.length, urlLen = location.href.length;
+        charCount.innerText = `${len} char${len !== 1 ? 's' : ''}`;
+        urlCount.innerText = `URL: ${urlLen}`;
+        urlCount.style.color = urlLen > 2000 ? '#ff4757' : '';
+    };
+
+    const updateStrengthMeter = () => {
+        const pw = keyInput.value;
+        if (!pw) { strengthBar.style.width = '0'; keyInput.style.borderColor = 'var(--border)'; keyInput.style.boxShadow = 'none'; return; }
+        const s = [pw.length > 6, pw.length > 10, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length;
+        const color = ['#ff4757', '#ff4757', '#ffa502', '#2ed573', '#1e90ff'][s - 1] || '#ff4757';
+        strengthBar.style.width = `${(s / 5) * 100}%`; strengthBar.style.background = color;
+        keyInput.style.setProperty('border-color', color, 'important');
+        keyInput.style.boxShadow = `0 0 5px ${color}`;
+    };
+
+    const simpleMarkdown = (text) => {
+        if (!text) return '';
+        const blocks = [];
+        let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/```([\s\S]*?)```/g, (_, code) => {
+                blocks.push(code);
+                return `__CODEBLOCK_${blocks.length - 1}__`;
+            });
+
+        const rules = [
+            [/^### (.*$)/gim, '<h3>$1</h3>'], [/^## (.*$)/gim, '<h2>$1</h2>'], [/^# (.*$)/gim, '<h1>$1</h1>'],
+            [/^---$|^\*\*\*$/gim, '<hr>'], [/^\> (.*$)/gim, '<blockquote>$1</blockquote>'],
+            [/^\s*[\-\*]\s+(.*$)/gim, '<ul><li>$1</li></ul>'], [/^\s*(\d+)\.\s+(.*$)/gim, '<ol><li>$2</li></ol>'],
+            [/\*\*(.*?)\*\*|__(.*?)__/gim, '<b>$1$2</b>'], [/\*(.*?)\*|_(.*?)_/gim, '<i>$1$2</i>'],
+            [/~~(.*?)~~/gim, '<del>$1</del>'], [/==(.*?)==/gim, '<mark>$1</mark>'], [/`(.*?)`/gim, '<code>$1</code>'],
+            [/!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' style='max-width:100%'>"],
+            [/\[(.*?)\]\((.*?)\)/gim, "<a href='$2' target='_blank'>$1</a>"],
+            [/\[ \]/g, '<input type="checkbox" disabled>'], [/\[x\]/g, '<input type="checkbox" checked disabled>']
+        ];
+
+        rules.forEach(([re, repl]) => html = html.replace(re, repl));
+        html = html.replace(/<\/(ul|ol)>\s*<\1>/gim, '').replace(/\n/gim, '<br>')
+            .replace(/(<\/(h[1-6]|ul|ol|blockquote|hr)>)\s*<br>/gim, '$1')
+            .replace(/<br>\s*(<(h[1-6]|ul|ol|blockquote|hr)>)/gim, '$1')
+            .replace(/__CODEBLOCK_(\d+)__/g, (_, i) => `<pre><code>${blocks[i]}</code></pre>`);
+        return html;
+    };
+
+    let syncTimer, lastDecryptionId = 0;
+    const updateURL = () => {
+        updateCharCount();
+        if (preview.style.display !== 'none') preview.innerHTML = simpleMarkdown(editor.value);
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(async () => {
+            if (!editor.value || editor.value === "undefined") return;
+            status.innerText = "Encrypting...";
+            try {
+                const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value || "", iterations: KDF_ITERATIONS });
+                if (!encrypted) throw 1;
+                window.history.replaceState(null, '', `#${encrypted}`);
+                updateCharCount();
+                status.innerText = "Synced";
+                localStorage.setItem('secredit_cache', JSON.stringify({ data: encrypted, iterations: KDF_ITERATIONS }));
+            } catch { status.innerText = "Sync error"; }
+        }, 500);
+    };
+
+    const performDecryption = async (data, password, iterations) => {
+        if (!data) return;
+        const currentId = ++lastDecryptionId;
+        status.innerText = "Decrypting...";
+        const candidates = iterations ? [iterations] : [KDF_ITERATIONS, 100000, 300000, 1000000];
+
+        for (const iter of candidates) {
+            try {
+                if (currentId !== lastDecryptionId) return;
+                const dec = await callWorker({ type: 'decrypt', data, password: password || "", iterations: iter });
+                if (currentId !== lastDecryptionId) return;
+                editor.value = dec;
+                status.innerText = "Decrypted";
+                updateCharCount();
+                if (preview.style.display !== 'none') preview.innerHTML = simpleMarkdown(dec);
+                updateURL();
+                return true;
+            } catch {}
+        }
+        if (currentId === lastDecryptionId) status.innerText = "Wrong key";
+    };
+
+    // --- Initialization & Events ---
+    window.onload = async () => {
+        const [data, key] = location.hash.substring(1).split('!');
+        if (key) try { keyInput.value = atob(key.replace(/-/g, '+').replace(/_/g, '/')); updateStrengthMeter(); } catch {}
+        if (data) await performDecryption(data, keyInput.value);
+        else {
+            const cache = localStorage.getItem('secredit_cache');
+            if (cache) {
+                const { data: cachedData, iterations } = JSON.parse(cache);
+                status.innerText = "Load from cache?";
+                status.style.cursor = "pointer";
+                status.onclick = async () => {
+                    if (await performDecryption(cachedData, keyInput.value || "", iterations)) {
+                        status.onclick = null;
+                        status.style.cursor = "default";
+                    }
+                };
+            }
+        }
+    };
+
+    editor.oninput = () => updateURL();
+    keyInput.oninput = () => {
+        updateStrengthMeter();
+        const data = location.hash.substring(1).split('!')[0];
+        if (data && !editor.value) performDecryption(data, keyInput.value);
+        else if (editor.value) updateURL();
+    };
+
+    togglePass.onclick = () => {
+        const isPass = keyInput.type === 'password';
+        keyInput.type = isPass ? 'text' : 'password';
+        togglePass.innerText = isPass ? '🙈' : '👁️';
+    };
+
+    // --- Emoji Picker ---
+    const emojis = ["😊", "😀", "😂", "😍", "🤔", "😎", "🥺", "😢", "😭", "😲", "💀", "❤️", "✅", "👍", "👎", "👇", "👉", "🔥", "✨", "🚀", "🌟", "🎉", "💯", "👀", "🧠", "💡", "🙏", "👏", "🙌", "💪"];
+    emojis.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.className = 'emoji-item'; btn.innerText = emoji; btn.type = 'button';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const start = editor.selectionStart, end = editor.selectionEnd;
+            editor.value = editor.value.slice(0, start) + emoji + editor.value.slice(end);
+            editor.selectionStart = editor.selectionEnd = start + emoji.length;
+            editor.focus(); updateURL(); emojiPopover.classList.remove('show');
+        };
+        emojiPopover.appendChild(btn);
+    });
+    emojiBtn.onclick = (e) => { e.stopPropagation(); emojiPopover.classList.toggle('show'); };
+    document.onclick = (e) => { if (!emojiPopover.contains(e.target) && e.target !== emojiBtn) emojiPopover.classList.remove('show'); };
+
+    // --- Actions ---
+    previewBtn.onclick = () => {
+        const isHidden = preview.style.display === 'none';
+        preview.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) preview.innerHTML = simpleMarkdown(editor.value);
+        previewBtn.style.background = isHidden ? 'var(--accent)' : '';
+    };
+
+    exportBtn.onclick = async () => {
+        if (!editor.value) return alert("Nothing to export");
+        const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value || "", iterations: KDF_ITERATIONS });
+        const blob = new Blob([JSON.stringify({ data: encrypted, iterations: KDF_ITERATIONS, v: 2 })], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `secret-${new Date().toISOString().slice(0, 10)}.secredit`;
+        a.click();
+    };
+
+    importBtn.onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.secredit';
+        input.onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = async (re) => {
+                const { data, iterations } = JSON.parse(re.target.result);
+                await performDecryption(data, keyInput.value, iterations);
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+        input.click();
+    };
+
+    pasteBtn.onclick = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (!text) return;
+            const start = editor.selectionStart, end = editor.selectionEnd;
+            editor.value = editor.value.slice(0, start) + text + editor.value.slice(end);
+            editor.selectionStart = editor.selectionEnd = start + text.length;
+            editor.focus(); updateURL();
+        } catch { status.innerText = "Paste failed"; }
+    };
+
+    const copy = (btn, text) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        const old = btn.innerText; btn.innerText = "✅";
+        setTimeout(() => btn.innerText = old, 2000);
+    };
+    copyTextBtn.onclick = () => copy(copyTextBtn, editor.selectionStart !== editor.selectionEnd ? editor.value.slice(editor.selectionStart, editor.selectionEnd) : editor.value);
+    copySecretBtn.onclick = () => location.hash.length > 1 ? copy(copySecretBtn, location.href) : alert("No content to share");
+
+    clearBtn.onclick = () => {
+        if (confirm("Clear text and start new document?")) {
+            editor.value = ""; history.replaceState(null, '', location.pathname);
+            preview.style.display = 'none'; preview.innerHTML = '';
+            previewBtn.style.background = '';
+            status.innerText = "Ready"; updateCharCount();
+        }
+    };
+
+    // --- Find & Replace ---
+    const fBar = $('find-replace-bar'), fIn = $('find-input'), rIn = $('replace-input');
+    findBtn.onclick = () => { fBar.classList.toggle('hidden'); if (!fBar.classList.contains('hidden')) fIn.focus(); };
+    $('close-find-btn').onclick = () => { fBar.classList.add('hidden'); editor.focus(); };
+
+    const findNext = () => {
+        const query = fIn.value; if (!query) return;
+        let idx = editor.value.indexOf(query, editor.selectionEnd);
+        if (idx === -1) idx = editor.value.indexOf(query);
+        if (idx !== -1) { editor.focus(); editor.setSelectionRange(idx, idx + query.length); }
+        else { const old = status.innerText; status.innerText = "Not found"; setTimeout(() => status.innerText = old, 1000); }
+    };
+
+    const replace = (all = false) => {
+        const query = fIn.value, repl = rIn.value; if (!query) return;
+        if (all) {
+            editor.value = editor.value.split(query).join(repl);
+            const old = status.innerText; status.innerText = "Replaced All"; setTimeout(() => status.innerText = old, 1000);
+        } else {
+            if (editor.value.slice(editor.selectionStart, editor.selectionEnd) === query) editor.setRangeText(repl, editor.selectionStart, editor.selectionEnd, 'select');
+            findNext();
+        }
+        updateURL();
+    };
+
+    $('find-next-btn').onclick = findNext;
+    $('replace-btn').onclick = () => replace();
+    $('replace-all-btn').onclick = () => replace(true);
+    [fIn, rIn].forEach(el => el.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); el === fIn ? findNext() : replace(); } });
+    
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            fBar.classList.remove('hidden');
+            fIn.focus();
+        }
+        if (e.key === 'Escape' && !fBar.classList.contains('hidden')) {
+            fBar.classList.add('hidden');
+            editor.focus();
+        }
+    });
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
+</body>
+</html>
