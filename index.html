@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure URL Editor</title>
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'none'; connect-src 'none'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; manifest-src 'self'">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#6c5ce7">
     <link rel="apple-touch-icon" href="icon.svg">
@@ -67,6 +69,10 @@
             background: rgba(255,255,255,0.2);
             border-color: rgba(255,255,255,0.4);
         }
+        
+        .sr-only { display: none; }
+        #main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
+        #close-find-btn { background: transparent; color: var(--text); font-size: 18px; }
 
         /* Emoji Picker */
         .emoji-wrapper { position: relative; }
@@ -94,6 +100,7 @@
         #preview table { border-collapse: collapse; width: 100%; margin: 10px 0; }
         #preview th, #preview td { border: 1px solid var(--border); padding: 8px; text-align: left; }
         #preview th { background: var(--status-bg); }
+        #preview img { max-width: 100%; }
 
         /* Find & Replace Bar */
         #find-replace-bar { display: flex; align-items: center; padding: 8px 20px; background: var(--status-bg); border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
@@ -106,8 +113,8 @@
 
 <header>
     <div class="controls">
-        <form class="input-wrapper" onsubmit="event.preventDefault();">
-            <input type="text" name="username" value="SecrEdit User" autocomplete="username" style="display:none;" aria-hidden="true">
+        <form class="input-wrapper">
+            <input type="text" name="username" value="SecrEdit User" autocomplete="username" class="sr-only" aria-hidden="true">
             <input type="password" id="key-input" placeholder="Secret key..." title="Encryption password" autocomplete="new-password">
             <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
             <button id="toggle-pass" title="Show/Hide password" type="button" aria-label="Toggle Password Visibility">👁️</button>
@@ -139,10 +146,10 @@
     <button id="find-next-btn" title="Find Next">⬇️</button>
     <button id="replace-btn" title="Replace Current">Replace</button>
     <button id="replace-all-btn" title="Replace All">All</button>
-    <button id="close-find-btn" title="Close" style="background:transparent; color:var(--text); font-size:18px;">✕</button>
+    <button id="close-find-btn" title="Close">✕</button>
 </div>
 
-<div id="main-container" style="flex: 1; display: flex; overflow: hidden; position: relative;">
+<div id="main-container">
      <textarea id="editor" placeholder="Entered text will be encrypted and saved in the URL using the key above."></textarea>
      <div id="preview"></div>
  </div>
@@ -154,7 +161,15 @@
 
     // --- Crypto Worker ---
     const workerCode = `
-        const toB64 = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+        const toB64 = b => {
+            const bytes = new Uint8Array(b);
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            }
+            return btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+        };
         const fromB64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
         async function deriveKey(pw, salt, iterations) {
             const mat = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
@@ -174,14 +189,15 @@
                     res.set(salt); res.set(iv, 16); res.set(new Uint8Array(enc), 28);
                     self.postMessage({ id, result: toB64(res) });
                 } else {
-                    const buf = new Uint8Array(fromB64(data)), isL = buf.length <= 28;
-                    const salt = isL ? new TextEncoder().encode("static-salt-v1") : buf.slice(0, 16);
-                    const iv = buf.slice(isL ? 0 : 16, isL ? 12 : 28);
+                    const buf = new Uint8Array(fromB64(data));
+                    if (buf.length < 28) throw new Error("Invalid data");
+                    const salt = buf.slice(0, 16);
+                    const iv = buf.slice(16, 28);
                     const key = await deriveKey(password, salt, iterations);
-                    const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, buf.slice(isL ? 12 : 28));
+                    const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, buf.slice(28));
                     self.postMessage({ id, result: await compress(dec, 'unzip') });
                 }
-            } catch (e) { self.postMessage({ id, error: e.toString() }); }
+            } catch (e) { self.postMessage({ id, error: "Operation failed" }); }
         };
     `;
 
@@ -206,6 +222,27 @@
         worker.postMessage({ ...msg, id });
     });
 
+    const PLAINTEXT_PREFIX = 'p:';
+    const toB64UrlBytes = (bytes) => {
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    };
+    const fromB64UrlToBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const gzipBytes = async (bytes) => {
+        const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+        return new Uint8Array(await new Response(stream).arrayBuffer());
+    };
+    const gunzipToText = async (bytes) => {
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+    };
+    const encodePlaintextForHash = async (text) => `${PLAINTEXT_PREFIX}${toB64UrlBytes(await gzipBytes(new TextEncoder().encode(text)))}`;
+    const decodePlaintextFromHash = async (payload) => gunzipToText(fromB64UrlToBytes(payload));
+
     const updateCharCount = () => {
         const len = editor.value.length, urlLen = location.href.length;
         charCount.innerText = `${len} char${len !== 1 ? 's' : ''}`;
@@ -215,16 +252,40 @@
 
     const updateStrengthMeter = () => {
         const pw = keyInput.value;
-        if (!pw) { strengthBar.style.width = '0'; keyInput.style.borderColor = 'var(--border)'; keyInput.style.boxShadow = 'none'; return; }
-        const s = [pw.length > 6, pw.length > 10, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length;
-        const color = ['#ff4757', '#ff4757', '#ffa502', '#2ed573', '#1e90ff'][s - 1] || '#ff4757';
+        status.style.color = '';
+        if (!pw) { 
+            strengthBar.style.width = '0'; 
+            keyInput.style.borderColor = 'var(--border)'; 
+            keyInput.style.boxShadow = 'none'; 
+            if (status.innerText === "Weak key!" || status.innerText === "Ready") status.innerText = "Unencrypted";
+            return; 
+        }
+        const s = [pw.length >= 8, pw.length >= 12, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length;
+        const isWeak = pw.length < 8;
+        const color = isWeak ? '#ff4757' : (['#ff4757', '#ff4757', '#ffa502', '#2ed573', '#1e90ff'][s - 1] || '#ff4757');
         strengthBar.style.width = `${(s / 5) * 100}%`; strengthBar.style.background = color;
         keyInput.style.setProperty('border-color', color, 'important');
         keyInput.style.boxShadow = `0 0 5px ${color}`;
+        
+        if (isWeak) {
+            status.innerText = "Weak key!";
+            status.style.color = '#ff4757';
+        } else if (status.innerText === "Weak key!" || status.innerText === "Secret key required") {
+            status.innerText = "Ready";
+        }
     };
 
     const simpleMarkdown = (text) => {
         if (!text) return '';
+        const esc = str => str.replace(/"/g, '&quot;');
+        const safeLinkUrl = url => {
+            try {
+                const u = new URL(url, 'http://safe');
+                return ['http:', 'https:', 'mailto:', 'tel:'].includes(u.protocol) ? esc(url) : '#unsafe';
+            } catch { return '#invalid'; }
+        };
+        const safeImageUrl = url => /^data:image\//i.test(url) ? esc(url) : '#unsafe';
+
         const blocks = [];
         let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/```([\s\S]*?)```/g, (_, code) => {
@@ -238,8 +299,8 @@
             [/^\s*[\-\*]\s+(.*$)/gim, '<ul><li>$1</li></ul>'], [/^\s*(\d+)\.\s+(.*$)/gim, '<ol><li>$2</li></ol>'],
             [/\*\*(.*?)\*\*|__(.*?)__/gim, '<b>$1$2</b>'], [/\*(.*?)\*|_(.*?)_/gim, '<i>$1$2</i>'],
             [/~~(.*?)~~/gim, '<del>$1</del>'], [/==(.*?)==/gim, '<mark>$1</mark>'], [/`(.*?)`/gim, '<code>$1</code>'],
-            [/!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' style='max-width:100%'>"],
-            [/\[(.*?)\]\((.*?)\)/gim, "<a href='$2' target='_blank'>$1</a>"],
+            [/!\[(.*?)\]\((.*?)\)/gim, (_, alt, src) => `<img alt="${esc(alt)}" referrerpolicy="no-referrer" loading="lazy" decoding="async" src="${safeImageUrl(src)}">`],
+            [/\[(.*?)\]\((.*?)\)/gim, (_, txt, href) => `<a href="${safeLinkUrl(href)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">${txt}</a>`],
             [/\[ \]/g, '<input type="checkbox" disabled>'], [/\[x\]/g, '<input type="checkbox" checked disabled>']
         ];
 
@@ -258,9 +319,28 @@
         clearTimeout(syncTimer);
         syncTimer = setTimeout(async () => {
             if (!editor.value || editor.value === "undefined") return;
+            if (!isNonEmptyKey(keyInput.value)) {
+                status.innerText = "Syncing (unencrypted)...";
+                status.style.color = '';
+                try {
+                    const encoded = await encodePlaintextForHash(editor.value);
+                    window.history.replaceState(null, '', `#${encoded}`);
+                    updateCharCount();
+                    status.innerText = "Synced (unencrypted)";
+                    localStorage.removeItem('secredit_cache');
+                } catch {
+                    status.innerText = "Sync error";
+                }
+                return;
+            }
+            if (!isKeyStrongEnoughToEncrypt(keyInput.value)) {
+                status.innerText = "Weak key!";
+                status.style.color = '#ff4757';
+                return;
+            }
             status.innerText = "Encrypting...";
             try {
-                const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value || "", iterations: KDF_ITERATIONS });
+                const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value, iterations: KDF_ITERATIONS });
                 if (!encrypted) throw 1;
                 window.history.replaceState(null, '', `#${encrypted}`);
                 updateCharCount();
@@ -272,6 +352,29 @@
 
     const performDecryption = async (data, password, iterations) => {
         if (!data) return;
+        if (data.startsWith(PLAINTEXT_PREFIX)) {
+            const currentId = ++lastDecryptionId;
+            status.innerText = "Loading (unencrypted)...";
+            status.style.color = '';
+            try {
+                const decoded = await decodePlaintextFromHash(data.slice(PLAINTEXT_PREFIX.length));
+                if (currentId !== lastDecryptionId) return;
+                editor.value = decoded;
+                status.innerText = "Loaded (unencrypted)";
+                updateCharCount();
+                if (preview.style.display !== 'none') preview.innerHTML = simpleMarkdown(decoded);
+                updateURL();
+                return true;
+            } catch {
+                status.innerText = "Invalid data";
+                return;
+            }
+        }
+        if (!isNonEmptyKey(password)) {
+            status.innerText = "Secret key required";
+            status.style.color = '#ff4757';
+            return;
+        }
         const currentId = ++lastDecryptionId;
         status.innerText = "Decrypting...";
         const candidates = iterations ? [iterations] : [KDF_ITERATIONS, 100000, 300000, 1000000];
@@ -293,18 +396,32 @@
     };
 
     // --- Initialization & Events ---
+    const isNonEmptyKey = (pw) => typeof pw === 'string' && pw.length > 0;
+    const isKeyStrongEnoughToEncrypt = (pw) => typeof pw === 'string' && pw.length >= 8;
+
+    document.querySelector('form.input-wrapper').addEventListener('submit', (e) => e.preventDefault());
+
     window.onload = async () => {
-        const [data, key] = location.hash.substring(1).split('!');
-        if (key) try { keyInput.value = atob(key.replace(/-/g, '+').replace(/_/g, '/')); updateStrengthMeter(); } catch {}
+        const data = location.hash.substring(1);
         if (data) await performDecryption(data, keyInput.value);
         else {
             const cache = localStorage.getItem('secredit_cache');
             if (cache) {
-                const { data: cachedData, iterations } = JSON.parse(cache);
+                let cachedData, iterations;
+                try {
+                    ({ data: cachedData, iterations } = JSON.parse(cache));
+                } catch {
+                    localStorage.removeItem('secredit_cache');
+                }
+                if (!cachedData) return;
                 status.innerText = "Load from cache?";
                 status.style.cursor = "pointer";
                 status.onclick = async () => {
-                    if (await performDecryption(cachedData, keyInput.value || "", iterations)) {
+                    if (!isNonEmptyKey(keyInput.value)) {
+                        status.innerText = "Enter key to load cache";
+                        return;
+                    }
+                    if (await performDecryption(cachedData, keyInput.value, iterations)) {
                         status.onclick = null;
                         status.style.cursor = "default";
                     }
@@ -316,7 +433,7 @@
     editor.oninput = () => updateURL();
     keyInput.oninput = () => {
         updateStrengthMeter();
-        const data = location.hash.substring(1).split('!')[0];
+        const data = location.hash.substring(1);
         if (data && !editor.value) performDecryption(data, keyInput.value);
         else if (editor.value) updateURL();
     };
@@ -346,7 +463,7 @@
 
     // --- Actions ---
     previewBtn.onclick = () => {
-        const isHidden = preview.style.display === 'none';
+        const isHidden = getComputedStyle(preview).display === 'none';
         preview.style.display = isHidden ? 'block' : 'none';
         if (isHidden) preview.innerHTML = simpleMarkdown(editor.value);
         previewBtn.style.background = isHidden ? 'var(--accent)' : '';
@@ -354,7 +471,8 @@
 
     exportBtn.onclick = async () => {
         if (!editor.value) return alert("Nothing to export");
-        const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value || "", iterations: KDF_ITERATIONS });
+        if (!isKeyStrongEnoughToEncrypt(keyInput.value)) return alert("Secret key required (8+ chars)");
+        const encrypted = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value, iterations: KDF_ITERATIONS });
         const blob = new Blob([JSON.stringify({ data: encrypted, iterations: KDF_ITERATIONS, v: 2 })], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -368,7 +486,18 @@
         input.onchange = (e) => {
             const reader = new FileReader();
             reader.onload = async (re) => {
-                const { data, iterations } = JSON.parse(re.target.result);
+                let parsed;
+                try {
+                    parsed = JSON.parse(re.target.result);
+                } catch {
+                    status.innerText = "Invalid file";
+                    return;
+                }
+                const { data, iterations } = parsed || {};
+                if (typeof data !== 'string' || !data) {
+                    status.innerText = "Invalid file";
+                    return;
+                }
                 await performDecryption(data, keyInput.value, iterations);
             };
             reader.readAsText(e.target.files[0]);
@@ -399,6 +528,7 @@
     clearBtn.onclick = () => {
         if (confirm("Clear text and start new document?")) {
             editor.value = ""; history.replaceState(null, '', location.pathname);
+            localStorage.removeItem('secredit_cache');
             preview.style.display = 'none'; preview.innerHTML = '';
             previewBtn.style.background = '';
             status.innerText = "Ready"; updateCharCount();
