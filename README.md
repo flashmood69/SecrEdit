@@ -41,10 +41,8 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 
 ### Running Locally
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/SecrEdit.git
-   ```
+1. Clone the repository
+   
 2. Open `index.html` in your browser or serve it using a local web server:
    ```bash
    # Using Python
@@ -58,6 +56,7 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 3. **Preview Markdown**: Click the **MD** button to see the formatted output.
 4. **Save/Share**: Copy the URL to your bookmarks or share it with someone who has the key.
 5. **Export**: Use the 💾 button to save an encrypted `.secredit` file to your computer.
+6. **Third-Party messaging apps**: You can use SecrEdit with third-party messaging apps that support sharing links.
 
 ## 📄 License
 
