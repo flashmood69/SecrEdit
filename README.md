@@ -8,7 +8,6 @@ SecrEdit is a privacy-focused, client-side encrypted text editor that stores eve
 
 - **End-to-End Encryption**: All encryption and decryption happen in your browser. Your secret key never leaves your device.
 - **URL-Based Storage**: The encrypted content is stored entirely in the URL fragment (hash), making it easy to bookmark or share.
-- **Markdown Support**: Built-in Markdown preview for rich text formatting.
 - **Compression**: Uses Gzip compression to maximize the amount of text you can store in a URL.
 - **Progressive Web App (PWA)**: Installable on mobile and desktop for offline use.
 - **File Support**: Export and import encrypted notes as `.secredit` files.
@@ -53,8 +52,7 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 
 1. **Enter a Secret Key**: Type a strong password in the top input field.
 2. **Write Your Note**: Type your content in the editor. The URL will update automatically.
-3. **Preview Markdown**: Click the **MD** button to see the formatted output.
-4. **Save/Share**: Copy the URL to your bookmarks or share it with someone who has the key.
+3. **Save/Share**: Copy the URL to your bookmarks or share it with someone who has the key.
 5. **Export**: Use the 💾 button to save an encrypted `.secredit` file to your computer.
 6. **Third-Party messaging apps**: You can use SecrEdit with third-party messaging apps that support sharing links.
 
