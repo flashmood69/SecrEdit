@@ -1,0 +1,92 @@
+:root { 
+    --bg: #fff; --text: #333; --accent: #6c5ce7; --sec: #4b4b4b; --status-bg: #f8f9fa; --border: #ddd;
+    --header-text: #fff; --header-bg: var(--accent);
+}
+@media (prefers-color-scheme: dark) {
+    :root { --bg: #1a1a1a; --text: #e0e0e0; --sec: #888; --status-bg: #2d2d2d; --border: #444; }
+}
+
+body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+header { display: flex; flex-direction: column; padding: 10px 20px; background: var(--header-bg); border-bottom: 1px solid rgba(0,0,0,0.1); gap: 10px; color: var(--header-text); position: relative; }
+
+#header-top { display: flex; align-items: center; width: 100%; gap: 15px; }
+#info-bar { display: flex; gap: 15px; align-items: center; }
+
+.collapsed .controls, .collapsed .btn-group { display: none; }
+#header:not(.collapsed) .char-count { display: none; }
+
+#burger-btn { background: transparent; border: none; font-size: 20px; padding: 5px; min-width: auto; height: auto; order: -1; }
+
+#editor { flex: 1; padding: 25px; border: none; outline: none; font-size: 18px; line-height: 1.6; background: transparent; color: inherit; resize: none; }
+
+.controls, .btn-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+button { 
+    min-width: 40px; height: 40px; border: none; padding: 4px; border-radius: 4px; cursor: pointer; 
+    font-size: 16px; font-weight: bold; transition: background 0.2s, transform 0.1s; color: white; 
+    display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); 
+}
+button:hover { background: rgba(255,255,255,0.25); }
+button:active { transform: scale(0.95); }
+
+.status, .char-count { font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.2; }
+.char-count { opacity: 0.7; }
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.strength-meter { 
+    position: absolute; 
+    bottom: -2px; 
+    left: 5px; 
+    right: 5px; 
+    height: 2px; 
+    background: transparent; 
+    border-radius: 2px; 
+    overflow: hidden; 
+}
+.strength-bar { height: 100%; width: 0; transition: width 0.3s, background 0.3s; }
+
+input#key-input { 
+    background: rgba(255,255,255,0.1); 
+    color: white; 
+    border: 1px solid rgba(255,255,255,0.2); 
+    padding: 5px 35px 5px 10px; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    width: 160px; 
+    height: 40px;
+    box-sizing: border-box;
+    transition: all 0.3s;
+    outline: none;
+}
+input#key-input::placeholder { color: rgba(255,255,255,0.6); }
+input#key-input:focus {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+}
+
+.sr-only { display: none; }
+#main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
+#close-find-btn { background: transparent; color: var(--text); font-size: 18px; }
+
+/* Emoji Picker */
+.emoji-wrapper { position: relative; }
+#emoji-popover {
+    display: none; position: absolute; top: 100%; left: 0; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; grid-template-columns: repeat(6, 40px); gap: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 5px;
+}
+#emoji-popover.show { display: grid; }
+.emoji-item { font-size: 24px; cursor: pointer; border-radius: 4px; background: transparent; border: none; transition: background 0.2s; width: 40px; height: 40px; color: var(--text); }
+.emoji-item:hover { background: var(--status-bg); transform: scale(1.1); }
+
+@media (max-width: 600px) {
+    #emoji-popover { position: fixed; top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 12px 12px 0 0; padding: 15px; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); border-top: 1px solid var(--border); }
+    #copyTextBtn, #pasteBtn { display: none; }
+}
+
+#toggle-pass { position: absolute; right: 0; width: 30px; background: transparent !important; border: none; color: inherit !important; font-size: 14px; z-index: 10; }
+
+/* Find & Replace Bar */
+#find-replace-bar { display: flex; align-items: center; padding: 8px 20px; background: var(--status-bg); border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+#find-replace-bar.hidden { display: none; }
+#find-replace-bar input { padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 14px; flex: 1; min-width: 80px; }
+#find-replace-bar button { padding: 6px 10px; font-size: 14px; white-space: nowrap; }

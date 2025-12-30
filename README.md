@@ -40,7 +40,10 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 
 ### Running Locally
 
-1. Clone the repository
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/flashmood69/SecrEdit.git
+   ```
    
 2. Open `index.html` in your browser or serve it using a local web server:
    ```bash
