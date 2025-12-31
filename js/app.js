@@ -17,6 +17,8 @@ const strengthBar = $('strength-bar');
 const togglePass = $('toggle-pass');
 const emojiBtn = $('emoji-btn');
 const emojiPopover = $('emoji-popover');
+const langBtn = $('lang-btn');
+const langPopover = $('lang-popover');
 const exportBtn = $('exportBtn');
 const importBtn = $('importBtn');
 const findBtn = $('findBtn');
@@ -30,15 +32,25 @@ const PLAINTEXT_PREFIX = 'p:';
 const SYNC_DEBOUNCE_MS = 500;
 const WORKER_TIMEOUT_MS = 10000;
 
-const setStatus = (text, color = '') => {
-    status.innerText = text;
+const setStatus = (key, color = '', params = {}) => {
+    status.setAttribute('data-i18n', key);
+    if (Object.keys(params).length) {
+        status.setAttribute('data-i18n-options', JSON.stringify(params));
+    } else {
+        status.removeAttribute('data-i18n-options');
+    }
+    status.innerText = I18n.t(key, params);
     status.style.color = color;
 };
-const flashStatus = (text, ms = 1000) => {
-    const oldText = status.innerText;
+const flashStatus = (key, ms = 1000) => {
+    const oldKey = status.getAttribute('data-i18n') || 'status_ready';
+    const oldOptions = status.getAttribute('data-i18n-options');
     const oldColor = status.style.color;
-    setStatus(text);
-    setTimeout(() => setStatus(oldText, oldColor), ms);
+    setStatus(key);
+    setTimeout(() => {
+        const opts = oldOptions ? JSON.parse(oldOptions) : {};
+        setStatus(oldKey, oldColor, opts);
+    }, ms);
 };
 
 const isNonEmptyKey = (pw) => typeof pw === 'string' && pw.length > 0;
@@ -170,9 +182,23 @@ const callWorker = (msg) => new Promise((resolve, reject) => {
 const updateCounts = () => {
     const chars = editor.value.length;
     const urlLen = location.href.length;
-    charCount.innerText = `${chars} char${chars === 1 ? '' : 's'}`;
-    urlCount.innerText = `URL: ${urlLen}`;
+    
+    const charKey = chars === 1 ? 'chars_count_one' : 'chars_count';
+    charCount.setAttribute('data-i18n', charKey);
+    charCount.setAttribute('data-i18n-options', JSON.stringify({ count: chars }));
+    charCount.innerText = I18n.t(charKey, { count: chars });
+    
+    urlCount.setAttribute('data-i18n', 'url_label');
+    urlCount.setAttribute('data-i18n-options', JSON.stringify({ count: urlLen }));
+    urlCount.innerText = I18n.t('url_label', { count: urlLen });
+    
     urlCount.style.color = urlLen > 2000 ? '#ff4757' : '';
+};
+
+const updateModeIndicator = (mode) => {
+    burgerBtn.classList.remove('mode-plain', 'mode-encrypted');
+    if (mode === 'plain') burgerBtn.classList.add('mode-plain');
+    else if (mode === 'encrypted') burgerBtn.classList.add('mode-encrypted');
 };
 
 const updateStrengthMeter = () => {
@@ -182,7 +208,12 @@ const updateStrengthMeter = () => {
         strengthBar.style.width = '0';
         keyInput.style.borderColor = 'var(--border)';
         keyInput.style.boxShadow = 'none';
-        if (status.innerText === 'Weak key!' || status.innerText === 'Ready') status.innerText = 'Unencrypted';
+        const currentKey = status.getAttribute('data-i18n');
+        // Always warn about unencrypted state if no key
+        if (currentKey === 'weak_key' || currentKey === 'status_ready' || currentKey === 'ready_encrypted' || currentKey === 'unencrypted') {
+            setStatus('unencrypted', '#ff4757');
+        }
+        updateModeIndicator('plain');
         return;
     }
 
@@ -202,8 +233,16 @@ const updateStrengthMeter = () => {
     keyInput.style.setProperty('border-color', color, 'important');
     keyInput.style.boxShadow = `0 0 5px ${color}`;
 
-    if (weak) setStatus('Weak key!', '#ff4757');
-    else if (status.innerText === 'Weak key!' || status.innerText === 'Secret key required') setStatus('Ready');
+    if (weak) {
+        setStatus('weak_key', '#ff4757');
+        updateModeIndicator('plain'); // Treat weak key as unsafe/plain mode warning or just fallback
+    } else {
+        const currentKey = status.getAttribute('data-i18n');
+        if (currentKey === 'weak_key' || currentKey === 'secret_key_required' || currentKey === 'status_ready' || currentKey === 'unencrypted') {
+            setStatus('ready_encrypted');
+        }
+        updateModeIndicator('encrypted');
+    }
 };
 
 const insertAtSelection = (text) => {
@@ -227,33 +266,31 @@ const syncToHash = async () => {
 
     const key = keyInput.value;
     if (!isNonEmptyKey(key)) {
-        setStatus('Syncing (unencrypted)...');
+        setStatus('syncing_unencrypted');
         try {
             history.replaceState(null, '', `#${await encodePlaintextForHash(text)}`);
             updateCounts();
-            setStatus('Synced (unencrypted)');
-            localStorage.removeItem('secredit_cache');
+            setStatus('synced_unencrypted', '#ff4757');
         } catch {
-            setStatus('Sync error');
+            setStatus('sync_error');
         }
         return;
     }
 
     if (!isKeyStrongEnoughToEncrypt(key)) {
-        setStatus('Weak key!', '#ff4757');
+        setStatus('weak_key', '#ff4757');
         return;
     }
 
-    setStatus('Encrypting...');
+    setStatus('encrypting');
     try {
         const encrypted = await callWorker({ type: 'encrypt', text, password: key, iterations: KDF_ITERATIONS });
         if (!encrypted) throw new Error('No result');
         history.replaceState(null, '', `#${encrypted}`);
         updateCounts();
-        setStatus('Synced');
-        localStorage.setItem('secredit_cache', JSON.stringify({ data: encrypted, iterations: KDF_ITERATIONS }));
+        setStatus('synced_encrypted');
     } catch {
-        setStatus('Sync error');
+        setStatus('sync_error');
     }
 };
 
@@ -263,27 +300,27 @@ const performDecryption = async (data, password, iterations) => {
     const currentId = ++lastDecryptionId;
 
     if (data.startsWith(PLAINTEXT_PREFIX)) {
-        setStatus('Loading (unencrypted)...');
+        setStatus('loading_unencrypted', '#ff4757');
         try {
             const decoded = await decodePlaintextFromHash(data.slice(PLAINTEXT_PREFIX.length));
             if (currentId !== lastDecryptionId) return false;
             editor.value = decoded;
-            setStatus('Loaded (unencrypted)');
+            setStatus('loaded_unencrypted', '#ff4757');
             updateCounts();
             scheduleSync();
             return true;
         } catch {
-            if (currentId === lastDecryptionId) setStatus('Invalid data');
+            if (currentId === lastDecryptionId) setStatus('invalid_data');
             return false;
         }
     }
 
     if (!isNonEmptyKey(password)) {
-        setStatus('Secret key required', '#ff4757');
+        setStatus('secret_key_required', '#ff4757');
         return false;
     }
 
-    setStatus('Decrypting...');
+    setStatus('decrypting');
     const candidates = iterations ? [iterations] : [KDF_ITERATIONS, 100000, 300000, 1000000];
 
     for (const iter of candidates) {
@@ -292,14 +329,14 @@ const performDecryption = async (data, password, iterations) => {
             const dec = await callWorker({ type: 'decrypt', payload: data, password: password || '', iterations: iter });
             if (currentId !== lastDecryptionId) return false;
             editor.value = dec;
-            setStatus('Decrypted');
+            setStatus('decrypted');
             updateCounts();
             scheduleSync();
             return true;
         } catch {}
     }
 
-    if (currentId === lastDecryptionId) setStatus('Wrong key');
+    if (currentId === lastDecryptionId) setStatus('wrong_key');
     return false;
 };
 
@@ -311,40 +348,54 @@ burgerBtn.addEventListener('click', () => {
 document.querySelector('form.input-wrapper').addEventListener('submit', (e) => e.preventDefault());
 
 window.addEventListener('load', async () => {
+    await I18n.init();
+    
+    const languages = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn'];
+
+    if (langBtn && langPopover) {
+        const updateLangBtn = (lang) => {
+            langBtn.innerHTML = `<img src="assets/flags/${lang}.svg" alt="${lang}" class="flag-icon">`;
+        };
+        updateLangBtn(I18n.currentLang);
+        
+        const langFrag = document.createDocumentFragment();
+        for (const lang of languages) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'lang-item';
+            btn.innerHTML = `<img src="assets/flags/${lang}.svg" alt="${lang}" class="flag-icon">`;
+            btn.title = lang.toUpperCase();
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                I18n.changeLanguage(lang);
+                updateLangBtn(lang);
+                updateCounts();
+                updateStrengthMeter();
+                langPopover.classList.remove('show');
+            });
+            langFrag.appendChild(btn);
+        }
+        langPopover.appendChild(langFrag);
+
+        langBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            langPopover.classList.toggle('show');
+            if (typeof emojiPopover !== 'undefined') emojiPopover.classList.remove('show');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (langPopover.classList.contains('show') && !langPopover.contains(e.target) && e.target !== langBtn) langPopover.classList.remove('show');
+        });
+    }
+
     updateCounts();
+    updateStrengthMeter();
 
     const data = location.hash.substring(1);
     if (data) {
         await performDecryption(data, keyInput.value);
         return;
     }
-
-    const cacheRaw = localStorage.getItem('secredit_cache');
-    if (!cacheRaw) return;
-
-    let cachedData;
-    let cachedIterations;
-    try {
-        ({ data: cachedData, iterations: cachedIterations } = JSON.parse(cacheRaw));
-    } catch {
-        localStorage.removeItem('secredit_cache');
-        return;
-    }
-    if (typeof cachedData !== 'string' || !cachedData) return;
-
-    setStatus('Load from cache?');
-    status.style.cursor = 'pointer';
-    status.onclick = async () => {
-        if (!isNonEmptyKey(keyInput.value)) {
-            setStatus('Enter key to load cache');
-            return;
-        }
-        const ok = await performDecryption(cachedData, keyInput.value, cachedIterations);
-        if (ok) {
-            status.onclick = null;
-            status.style.cursor = 'default';
-        }
-    };
 });
 
 editor.addEventListener('input', scheduleSync);
@@ -381,19 +432,24 @@ emojiPopover.appendChild(emojiFrag);
 emojiBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     emojiPopover.classList.toggle('show');
+    if (langPopover) langPopover.classList.remove('show');
 });
 document.addEventListener('click', (e) => {
     if (emojiPopover.classList.contains('show') && !emojiPopover.contains(e.target) && e.target !== emojiBtn) emojiPopover.classList.remove('show');
 });
 
 exportBtn.addEventListener('click', async () => {
-    if (!editor.value) return alert('Nothing to export');
+    if (!editor.value) return alert(I18n.t('nothing_to_export'));
     let data;
-    if (!isNonEmptyKey(keyInput.value)) {
-        data = await encodePlaintextForHash(editor.value);
-    } else {
-        if (!isKeyStrongEnoughToEncrypt(keyInput.value)) return alert('Secret key required (8+ chars) or leave empty for plain text');
-        data = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value, iterations: KDF_ITERATIONS });
+    try {
+        if (!isNonEmptyKey(keyInput.value)) {
+            data = await encodePlaintextForHash(editor.value);
+        } else {
+            if (!isKeyStrongEnoughToEncrypt(keyInput.value)) return alert(I18n.t('export_key_required'));
+            data = await callWorker({ type: 'encrypt', text: editor.value, password: keyInput.value, iterations: KDF_ITERATIONS });
+        }
+    } catch {
+        return alert(I18n.t('operation_failed'));
     }
     const blob = new Blob([JSON.stringify({ data, iterations: KDF_ITERATIONS, v: 2 })], { type: 'application/json' });
     const a = document.createElement('a');
@@ -415,12 +471,12 @@ importBtn.addEventListener('click', () => {
             try {
                 parsed = JSON.parse(reader.result);
             } catch {
-                setStatus('Invalid file');
+                setStatus('invalid_file');
                 return;
             }
             const { data, iterations } = parsed || {};
             if (typeof data !== 'string' || !data) {
-                setStatus('Invalid file');
+                setStatus('invalid_file');
                 return;
             }
             await performDecryption(data, keyInput.value, iterations);
@@ -435,7 +491,7 @@ pasteBtn.addEventListener('click', async () => {
         const text = await navigator.clipboard.readText();
         if (text) insertAtSelection(text);
     } catch {
-        setStatus('Paste failed');
+        setStatus('paste_failed');
     }
 });
 
@@ -455,17 +511,18 @@ copyTextBtn.addEventListener('click', () => {
     copyWithFeedback(copyTextBtn, selected);
 });
 copySecretBtn.addEventListener('click', () => {
-    if (location.hash.length <= 1) return alert('No content to share');
+    if (location.hash.length <= 1) return alert(I18n.t('no_content_to_share'));
     copyWithFeedback(copySecretBtn, location.href);
 });
 
 clearBtn.addEventListener('click', () => {
-    if (!confirm('Clear text and start new document?')) return;
+    if (!confirm(I18n.t('clear_confirm'))) return;
     editor.value = '';
+    keyInput.value = '';
     history.replaceState(null, '', location.pathname);
-    localStorage.removeItem('secredit_cache');
-    setStatus('Ready');
+    updateStrengthMeter();
     updateCounts();
+    editor.focus();
 });
 
 const fBar = $('find-replace-bar');
@@ -494,7 +551,7 @@ const findNext = () => {
     const start = editor.selectionEnd;
     const idx = editor.value.indexOf(query, start);
     const wrappedIdx = idx === -1 ? editor.value.indexOf(query) : idx;
-    if (wrappedIdx === -1) return flashStatus('Not found');
+    if (wrappedIdx === -1) return flashStatus('not_found');
     editor.focus();
     editor.setSelectionRange(wrappedIdx, wrappedIdx + query.length);
 };
@@ -505,7 +562,7 @@ const replace = (all = false) => {
     const repl = rIn.value;
     if (all) {
         editor.value = editor.value.split(query).join(repl);
-        flashStatus('Replaced All');
+        flashStatus('replaced_all');
         scheduleSync();
         return;
     }

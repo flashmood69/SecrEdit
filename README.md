@@ -59,6 +59,10 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 5. **Export**: Use the 💾 button to save an encrypted `.secredit` file to your computer.
 6. **Third-Party messaging apps**: You can use SecrEdit with third-party messaging apps that support sharing links.
 
+## 🤝 Credits
+
+- **Flag Icons**: Provided by [Flagpedia.net](https://flagpedia.net) via [Flagcdn.com](https://flagcdn.com).
+
 ## 📄 License
 
 This is free and unencumbered software released into the public domain. For more information, please refer to the [LICENSE](LICENSE) file or [unlicense.org](https://unlicense.org/).

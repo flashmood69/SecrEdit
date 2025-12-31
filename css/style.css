@@ -9,13 +9,13 @@
 body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
 header { display: flex; flex-direction: column; padding: 10px 20px; background: var(--header-bg); border-bottom: 1px solid rgba(0,0,0,0.1); gap: 10px; color: var(--header-text); position: relative; }
 
-#header-top { display: flex; align-items: center; width: 100%; gap: 15px; }
+#header-top { display: flex; align-items: center; width: 100%; gap: 10px; }
 #info-bar { display: flex; gap: 15px; align-items: center; }
 
 .collapsed .controls, .collapsed .btn-group { display: none; }
 #header:not(.collapsed) .char-count { display: none; }
 
-#burger-btn { background: transparent; border: none; font-size: 20px; padding: 5px; min-width: auto; height: auto; order: -1; }
+#burger-btn { order: -1; }
 
 #editor { flex: 1; padding: 25px; border: none; outline: none; font-size: 18px; line-height: 1.6; background: transparent; color: inherit; resize: none; }
 
@@ -67,19 +67,24 @@ input#key-input:focus {
 #main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 #close-find-btn { background: transparent; color: var(--text); font-size: 18px; }
 
-/* Emoji Picker */
-.emoji-wrapper { position: relative; }
-#emoji-popover {
+/* Emoji Picker & Language Picker */
+.emoji-wrapper, .lang-wrapper { position: relative; }
+#emoji-popover, #lang-popover {
     display: none; position: absolute; top: 100%; left: 0; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px; grid-template-columns: repeat(6, 40px); gap: 5px;
+    border-radius: 8px; padding: 10px; gap: 5px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 5px;
 }
-#emoji-popover.show { display: grid; }
-.emoji-item { font-size: 24px; cursor: pointer; border-radius: 4px; background: transparent; border: none; transition: background 0.2s; width: 40px; height: 40px; color: var(--text); }
-.emoji-item:hover { background: var(--status-bg); transform: scale(1.1); }
+#emoji-popover { grid-template-columns: repeat(6, 40px); }
+#lang-popover { grid-template-columns: repeat(3, 40px); }
+#emoji-popover.show, #lang-popover.show { display: grid; }
+.emoji-item, .lang-item { font-size: 24px; cursor: pointer; border-radius: 4px; background: transparent; border: none; transition: background 0.2s; width: 40px; height: 40px; color: var(--text); }
+.emoji-item:hover, .lang-item:hover { background: var(--status-bg); transform: scale(1.1); }
+.flag-icon { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+#lang-btn { width: 40px; }
+.lang-item { padding: 6px; }
 
 @media (max-width: 600px) {
-    #emoji-popover { position: fixed; top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 12px 12px 0 0; padding: 15px; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); border-top: 1px solid var(--border); }
+    #emoji-popover, #lang-popover { position: fixed; top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 12px 12px 0 0; padding: 15px; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); border-top: 1px solid var(--border); }
     #copyTextBtn, #pasteBtn { display: none; }
 }
 
