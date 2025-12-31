@@ -124,3 +124,6 @@ class I18nManager {
 }
 
 const I18n = new I18nManager();
+
+window.I18nManager = I18nManager;
+window.I18n = I18n;

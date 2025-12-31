@@ -95,3 +95,42 @@ input#key-input:focus {
 #find-replace-bar.hidden { display: none; }
 #find-replace-bar input { padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 14px; flex: 1; min-width: 80px; }
 #find-replace-bar button { padding: 6px 10px; font-size: 14px; white-space: nowrap; }
+
+@media print {
+    header,
+    #find-replace-bar,
+    #emoji-popover,
+    #lang-popover {
+        display: none !important;
+    }
+
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        height: auto !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    body {
+        display: block !important;
+    }
+
+    #main-container {
+        overflow: visible !important;
+    }
+
+    #editor {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        color: #000 !important;
+        background: transparent !important;
+        font-size: 12pt !important;
+        line-height: 1.4 !important;
+    }
+}
