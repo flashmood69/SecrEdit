@@ -9,6 +9,7 @@ window.SecrEditLocales.ar = {
         "key_title": "كلمة مرور التشفير",
         "show_hide_pass": "إظهار/إخفاء كلمة المرور",
         "status_ready": "جاهز",
+        "ready_encrypted": "جاهز (مشفر)",
         "chars_count": "{{count}} حرف",
         "chars_count_one": "حرف واحد",
         "url_count_title": "طول الرابط (حدود المتصفح: ~2k-8k)",
@@ -33,6 +34,7 @@ window.SecrEditLocales.ar = {
         "secret_key_required": "المفتاح السري مطلوب",
         "syncing_unencrypted": "جاري المزامنة (غير مشفر)...",
         "synced_unencrypted": "تمت المزامنة (غير مشفر)",
+        "synced_encrypted": "تم المزامنة (مشفر)",
         "sync_error": "خطأ في المزامنة",
         "encrypting": "جاري التشفير...",
         "synced": "تمت المزامنة",
@@ -42,8 +44,6 @@ window.SecrEditLocales.ar = {
         "decrypting": "جاري فك التشفير...",
         "decrypted": "تم فك التشفير",
         "wrong_key": "مفتاح خاطئ",
-        "load_from_cache": "التحميل من ذاكرة التخزين المؤقت؟",
-        "enter_key_to_load": "أدخل المفتاح لتحميل ذاكرة التخزين المؤقت",
         "nothing_to_export": "لا يوجد شيء لتصديره",
         "export_key_required": "المفتاح السري مطلوب (8+ أحرف) أو اتركه فارغًا للنص العادي",
         "invalid_file": "ملف غير صالح",
@@ -54,6 +54,7 @@ window.SecrEditLocales.ar = {
         "replaced_all": "تم استبدال الكل",
         "operation_failed": "فشلت العملية",
         "invalid_request": "طلب غير صالح",
-        "timeout": "انتهى الوقت"
+        "timeout": "انتهى الوقت",
+        "update_available": "تحديث متاح. انقر لإعادة التحميل."
     }
 };

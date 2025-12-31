@@ -9,6 +9,7 @@ window.SecrEditLocales.zh = {
         "key_title": "加密密码",
         "show_hide_pass": "显示/隐藏密码",
         "status_ready": "就绪",
+        "ready_encrypted": "就绪 (已加密)",
         "chars_count": "{{count}} 字符",
         "chars_count_one": "{{count}} 字符",
         "url_count_title": "URL 长度 (浏览器限制: ~2k-8k)",
@@ -33,6 +34,7 @@ window.SecrEditLocales.zh = {
         "secret_key_required": "需要密钥",
         "syncing_unencrypted": "同步中 (未加密)...",
         "synced_unencrypted": "已同步 (未加密)",
+        "synced_encrypted": "已同步 (已加密)",
         "sync_error": "同步错误",
         "encrypting": "加密中...",
         "synced": "已同步",
@@ -42,8 +44,6 @@ window.SecrEditLocales.zh = {
         "decrypting": "解密中...",
         "decrypted": "已解密",
         "wrong_key": "密钥错误",
-        "load_from_cache": "从缓存加载？",
-        "enter_key_to_load": "输入密钥以加载缓存",
         "nothing_to_export": "没有可导出的内容",
         "export_key_required": "需要密钥 (8+ 字符) 或留空以保存为纯文本",
         "invalid_file": "无效文件",
@@ -54,6 +54,7 @@ window.SecrEditLocales.zh = {
         "replaced_all": "已全部替换",
         "operation_failed": "操作失败",
         "invalid_request": "无效请求",
-        "timeout": "超时"
+        "timeout": "超时",
+        "update_available": "有可用更新。点击重新加载。"
     }
 };

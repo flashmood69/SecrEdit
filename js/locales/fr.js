@@ -9,6 +9,7 @@ window.SecrEditLocales.fr = {
         "key_title": "Mot de passe de chiffrement",
         "show_hide_pass": "Afficher/Masquer le mot de passe",
         "status_ready": "Prêt",
+        "ready_encrypted": "Prêt (Chiffré)",
         "chars_count": "{{count}} chars",
         "chars_count_one": "{{count}} char",
         "url_count_title": "Longueur URL (Limites navigateur: ~2k-8k)",
@@ -33,6 +34,7 @@ window.SecrEditLocales.fr = {
         "secret_key_required": "Clé secrète requise",
         "syncing_unencrypted": "Synchro (non chiffré)...",
         "synced_unencrypted": "Synchronisé (non chiffré)",
+        "synced_encrypted": "Synchronisé (Chiffré)",
         "sync_error": "Erreur synchro",
         "encrypting": "Chiffrement...",
         "synced": "Synchronisé",
@@ -42,8 +44,6 @@ window.SecrEditLocales.fr = {
         "decrypting": "Déchiffrement...",
         "decrypted": "Déchiffré",
         "wrong_key": "Mauvaise clé",
-        "load_from_cache": "Charger du cache ?",
-        "enter_key_to_load": "Entrer la clé pour charger",
         "nothing_to_export": "Rien à exporter",
         "export_key_required": "Clé secrète requise (8+ chars) ou laisser vide pour texte clair",
         "invalid_file": "Fichier invalide",
@@ -54,6 +54,7 @@ window.SecrEditLocales.fr = {
         "replaced_all": "Tout remplacé",
         "operation_failed": "Échec de l'opération",
         "invalid_request": "Requête invalide",
-        "timeout": "Délai dépassé"
+        "timeout": "Délai dépassé",
+        "update_available": "Mise à jour disponible. Cliquez pour recharger."
     }
 };

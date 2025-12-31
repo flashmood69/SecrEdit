@@ -54,6 +54,7 @@ window.SecrEditLocales.bn = {
         "replaced_all": "সব প্রতিস্থাপন করা হয়েছে",
         "operation_failed": "অপারেশন ব্যর্থ হয়েছে",
         "invalid_request": "অবৈধ অনুরোধ",
-        "timeout": "সময় শেষ"
+        "timeout": "সময় শেষ",
+        "update_available": "আপডেট উপলব্ধ। রিলোড করতে ক্লিক করুন।"
     }
 };

@@ -9,6 +9,7 @@ window.SecrEditLocales.de = {
         "key_title": "Verschlüsselungspasswort",
         "show_hide_pass": "Passwort anzeigen/verbergen",
         "status_ready": "Bereit",
+        "ready_encrypted": "Bereit (Verschlüsselt)",
         "chars_count": "{{count}} Zeichen",
         "chars_count_one": "{{count}} Zeichen",
         "url_count_title": "URL-Länge (Browser-Limits: ~2k-8k)",
@@ -33,6 +34,7 @@ window.SecrEditLocales.de = {
         "secret_key_required": "Geheimer Schlüssel erforderlich",
         "syncing_unencrypted": "Synchronisiere (unverschlüsselt)...",
         "synced_unencrypted": "Synchronisiert (unverschlüsselt)",
+        "synced_encrypted": "Synchronisiert (Verschlüsselt)",
         "sync_error": "Synchronisierungsfehler",
         "encrypting": "Verschlüssele...",
         "synced": "Synchronisiert",
@@ -42,8 +44,6 @@ window.SecrEditLocales.de = {
         "decrypting": "Entschlüssele...",
         "decrypted": "Entschlüsselt",
         "wrong_key": "Falscher Schlüssel",
-        "load_from_cache": "Aus Cache laden?",
-        "enter_key_to_load": "Schlüssel eingeben zum Laden",
         "nothing_to_export": "Nichts zu exportieren",
         "export_key_required": "Geheimer Schlüssel erforderlich (8+ Zeichen) oder leer lassen für Klartext",
         "invalid_file": "Ungültige Datei",
@@ -54,6 +54,7 @@ window.SecrEditLocales.de = {
         "replaced_all": "Alle ersetzt",
         "operation_failed": "Operation fehlgeschlagen",
         "invalid_request": "Ungültige Anfrage",
-        "timeout": "Zeitüberschreitung"
+        "timeout": "Zeitüberschreitung",
+        "update_available": "Update verfügbar. Klicken zum Neu laden."
     }
 };

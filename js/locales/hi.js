@@ -9,6 +9,7 @@ window.SecrEditLocales.hi = {
         "key_title": "एन्क्रिप्शन पासवर्ड",
         "show_hide_pass": "पासवर्ड दिखाएं/छिपाएं",
         "status_ready": "तैयार",
+        "ready_encrypted": "तैयार (एन्क्रिप्टेड)",
         "chars_count": "{{count}} अक्षर",
         "chars_count_one": "{{count}} अक्षर",
         "url_count_title": "URL लंबाई (ब्राउज़र सीमा: ~2k-8k)",
@@ -33,6 +34,7 @@ window.SecrEditLocales.hi = {
         "secret_key_required": "गुप्त कुंजी आवश्यक",
         "syncing_unencrypted": "सिंक हो रहा है (एन्क्रिप्ट नहीं)...",
         "synced_unencrypted": "सिंक किया गया (एन्क्रिप्ट नहीं)",
+        "synced_encrypted": "सिंक किया गया (एन्क्रिप्टेड)",
         "sync_error": "सिंक त्रुटि",
         "encrypting": "एन्क्रिप्ट हो रहा है...",
         "synced": "सिंक किया गया",
@@ -42,8 +44,6 @@ window.SecrEditLocales.hi = {
         "decrypting": "डिक्रिप्ट हो रहा है...",
         "decrypted": "डिक्रिप्ट किया गया",
         "wrong_key": "गलत कुंजी",
-        "load_from_cache": "कैश से लोड करें?",
-        "enter_key_to_load": "कैश लोड करने के लिए कुंजी दर्ज करें",
         "nothing_to_export": "निर्यात करने के लिए कुछ नहीं",
         "export_key_required": "गुप्त कुंजी आवश्यक (8+ अक्षर) या सादे पाठ के लिए खाली छोड़ दें",
         "invalid_file": "अमान्य फ़ाइल",
@@ -54,6 +54,7 @@ window.SecrEditLocales.hi = {
         "replaced_all": "सभी बदल दिए गए",
         "operation_failed": "ऑपरेशन विफल",
         "invalid_request": "अमान्य अनुरोध",
-        "timeout": "समय समाप्त"
+        "timeout": "समय समाप्त",
+        "update_available": "अपडेट उपलब्ध है। रीलोड करने के लिए क्लिक करें।"
     }
 };

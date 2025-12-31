@@ -589,4 +589,29 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !fBar.classList.contains('hidden')) hideFindBar();
 });
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    showUpdateNotification();
+                }
+            });
+        });
+    }).catch(() => {});
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        showUpdateNotification();
+    });
+}
+
+const showUpdateNotification = () => {
+    setStatus('update_available', '#2ed573');
+    status.style.cursor = 'pointer';
+    status.title = I18n.t('update_available');
+    status.onclick = () => {
+        status.onclick = null;
+        window.location.reload();
+    };
+};

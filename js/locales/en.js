@@ -54,6 +54,7 @@ window.SecrEditLocales.en = {
         "replaced_all": "Replaced All",
         "operation_failed": "Operation failed",
         "invalid_request": "Invalid request",
-        "timeout": "Timeout"
+        "timeout": "Timeout",
+        "update_available": "Update available. Click to reload."
     }
 };
