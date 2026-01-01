@@ -472,7 +472,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
     window.addEventListener('load', async () => {
         await i18n.init();
 
-        const languages = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn'];
+        const languages = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru'];
 
         if (langBtn && langPopover) {
             const updateLangBtn = (lang) => {
@@ -595,6 +595,9 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         newKeyInput.placeholder = i18n.t('key_placeholder');
         newKeyInput.style.width = '100%';
         newKeyInput.addEventListener('click', (e) => e.stopPropagation());
+        const isRtl = document.documentElement.dir === 'rtl';
+        if (isRtl) newKeyInput.style.paddingLeft = '35px';
+        else newKeyInput.style.paddingRight = '35px';
 
         const newStrengthMeter = document.createElement('div');
         newStrengthMeter.className = 'strength-meter';
@@ -610,7 +613,8 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         toggleBtn.type = 'button';
         toggleBtn.innerText = '👁️';
         toggleBtn.style.position = 'absolute';
-        toggleBtn.style.right = '5px';
+        if (isRtl) toggleBtn.style.left = '5px';
+        else toggleBtn.style.right = '5px';
         toggleBtn.style.top = '50%';
         toggleBtn.style.transform = 'translateY(-50%)';
         toggleBtn.style.background = 'none';
@@ -651,8 +655,8 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         colorInput.style.background = 'transparent';
         colorInput.title = i18n.t('profile_color') || 'Profile Color';
 
-        colorWrapper.appendChild(colorLabel);
         colorWrapper.appendChild(colorInput);
+        colorWrapper.appendChild(colorLabel);
 
         const saveBtn = document.createElement('button');
         saveBtn.id = 'save-profile-btn';

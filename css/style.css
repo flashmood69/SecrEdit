@@ -143,6 +143,15 @@ input#key-input:focus {
 #emoji-popover.show, #lang-popover.show { display: grid; }
 #profile-popover.show { display: flex; }
 
+@media (min-width: 601px) {
+    html[dir="rtl"] #emoji-popover,
+    html[dir="rtl"] #lang-popover,
+    html[dir="rtl"] #profile-popover {
+        left: auto;
+        right: 0;
+    }
+}
+
 .emoji-item, .lang-item { font-size: 24px; cursor: pointer; border-radius: 4px; background: transparent; border: none; transition: background 0.2s; width: 40px; height: 40px; color: var(--text); }
 .emoji-item:hover, .lang-item:hover { background: var(--status-bg); transform: scale(1.1); }
 .flag-icon { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
@@ -188,12 +197,13 @@ input#key-input:focus {
 #save-profile-container input:not([type="color"]) {
     flex: 1;
     min-width: 0;
-    padding: 4px 8px;
+    padding: 8px 10px;
+    height: 40px;
     border: 1px solid var(--border);
     border-radius: 4px;
     background: var(--bg);
     color: var(--text);
-    font-size: 12px;
+    font-size: 13px;
 }
 #save-profile-container input[type="color"] {
     flex: 0 0 40px;

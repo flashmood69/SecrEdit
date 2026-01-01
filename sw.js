@@ -1,4 +1,4 @@
-const CACHE_NAME = 'secredit-v6';
+const CACHE_NAME = 'secredit-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -20,7 +20,8 @@ const ASSETS = [
   './js/locales/zh.js',
   './js/locales/hi.js',
   './js/locales/pt.js',
-  './js/locales/bn.js'
+  './js/locales/bn.js',
+  './js/locales/ru.js'
 ];
 
 self.addEventListener('install', (event) => {

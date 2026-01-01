@@ -28,7 +28,7 @@ window.SecrEditLocales.fr = {
         "replace_current": "Remplacer",
         "replace_all": "Tout",
         "close": "Fermer",
-        "editor_placeholder": "Le texte est compressé dans l'URL et chiffré si un profil autre que 'Pas de Secrets' est sélectionné.",
+        "editor_placeholder": "Le texte est compressé dans l’URL et chiffré si un profil autre que 'Pas de Secrets' est sélectionné. Utilisez 👤 pour gérer les profils. Cliquez sur 🔗 pour copier le lien de ce message.",
         "weak_key": "Clé faible !",
         "unencrypted": "Non chiffré",
         "secret_key_required": "Clé secrète requise",

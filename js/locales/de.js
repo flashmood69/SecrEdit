@@ -28,7 +28,7 @@ window.SecrEditLocales.de = {
         "replace_current": "Ersetzen",
         "replace_all": "Alle",
         "close": "Schließen",
-        "editor_placeholder": "Text wird in der URL komprimiert und verschlüsselt, wenn ein anderes Profil als 'Keine Geheimnisse' gewählt wird.",
+        "editor_placeholder": "Text wird in der URL komprimiert und verschlüsselt, wenn ein anderes Profil als 'Keine Geheimnisse' gewählt wird. Verwende 👤, um Profile zu verwalten. Klicke auf 🔗, um den Link zu dieser Nachricht zu kopieren.",
         "weak_key": "Schwacher Schlüssel!",
         "unencrypted": "Unverschlüsselt",
         "secret_key_required": "Geheimer Schlüssel erforderlich",

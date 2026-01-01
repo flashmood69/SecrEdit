@@ -1,7 +1,7 @@
 class I18nManager {
     constructor() {
         this.currentLang = 'en';
-        this.supportedLangs = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn']; // Should match loaded files
+        this.supportedLangs = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru']; // Should match loaded files
         this.resources = window.SecrEditLocales || {};
         this.observers = [];
     }

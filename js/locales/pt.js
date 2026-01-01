@@ -28,7 +28,7 @@ window.SecrEditLocales.pt = {
         "replace_current": "Substituir",
         "replace_all": "Tudo",
         "close": "Fechar",
-        "editor_placeholder": "O texto é compactado na URL e criptografado se um perfil diferente de 'Sem Segredos' for selecionado.",
+        "editor_placeholder": "O texto é comprimido na URL e criptografado se um perfil diferente de 'Sem Segredos' for selecionado. Use 👤 para gerenciar perfis. Clique em 🔗 para copiar o link desta mensagem.",
         "weak_key": "Chave fraca!",
         "unencrypted": "Não criptografado",
         "secret_key_required": "Chave secreta necessária",

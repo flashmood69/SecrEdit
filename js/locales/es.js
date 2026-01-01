@@ -28,7 +28,7 @@ window.SecrEditLocales.es = {
         "replace_current": "Reemplazar",
         "replace_all": "Todo",
         "close": "Cerrar",
-        "editor_placeholder": "El texto se comprime en la URL y se cifra si selecciona un perfil distinto a 'Sin Secretos'.",
+        "editor_placeholder": "El texto se comprime en la URL y se cifra si selecciona un perfil distinto a 'Sin Secretos'. Usa 👤 para gestionar perfiles. Pulsa 🔗 para copiar el enlace de este mensaje.",
         "weak_key": "¡Clave débil!",
         "unencrypted": "Sin cifrar",
         "secret_key_required": "Clave secreta requerida",

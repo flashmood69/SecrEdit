@@ -28,7 +28,7 @@ window.SecrEditLocales.zh = {
         "replace_current": "替换",
         "replace_all": "全部",
         "close": "关闭",
-        "editor_placeholder": "文本在 URL 中压缩，如果选择了除“没有秘密”以外的配置，则会被加密。",
+        "editor_placeholder": "文本在 URL 中压缩，如果选择了除“没有秘密”以外的配置，则会被加密。使用 👤 管理配置。点击 🔗 复制此消息的链接。",
         "weak_key": "密钥太弱！",
         "unencrypted": "未加密",
         "secret_key_required": "需要密钥",

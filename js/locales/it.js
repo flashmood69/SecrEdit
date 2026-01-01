@@ -28,7 +28,7 @@ window.SecrEditLocales.it = {
         "replace_current": "Sostituisci",
         "replace_all": "Tutto",
         "close": "Chiudi",
-        "editor_placeholder": "Il testo viene compresso nell'URL e crittografato se si seleziona un profilo diverso da 'Senza Segreti'.",
+        "editor_placeholder": "Il testo viene compresso nell'URL e crittografato se si seleziona un profilo diverso da 'Senza Segreti'. Usa 👤 per gestire i profili. Premi 🔗 per copiare il link di questo messaggio.",
         "weak_key": "Chiave debole!",
         "unencrypted": "Non cifrato",
         "secret_key_required": "Chiave segreta richiesta",

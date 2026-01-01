@@ -28,7 +28,7 @@ window.SecrEditLocales.en = {
         "replace_current": "Replace",
         "replace_all": "All",
         "close": "Close",
-        "editor_placeholder": "Text is compressed in the URL and encrypted if a profile other than 'No Secrets' is selected.",
+        "editor_placeholder": "Text is compressed in the URL and encrypted if a profile other than 'No Secrets' is selected. Use 👤 to manage profiles. Click 🔗 to copy a link to this message.",
         "weak_key": "Weak key!",
         "unencrypted": "Unencrypted",
         "secret_key_required": "Secret key required",
