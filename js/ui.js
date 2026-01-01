@@ -774,6 +774,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                 colorBtn.style.borderRadius = '4px';
                 colorBtn.style.cursor = 'pointer';
                 colorBtn.style.padding = '0';
+                colorBtn.style.marginRight = '8px';
                 colorBtn.style.background = 'transparent';
                 colorBtn.addEventListener('click', (e) => e.stopPropagation());
                 colorBtn.addEventListener('input', (e) => {
@@ -810,8 +811,8 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                     profilePopover.classList.remove('show');
                 });
 
-                item.appendChild(label);
                 item.appendChild(colorBtn);
+                item.appendChild(label);
                 item.appendChild(delBtn);
                 profilePopover.appendChild(item);
             });

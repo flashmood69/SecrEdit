@@ -185,7 +185,7 @@ input#key-input:focus {
     box-sizing: border-box;
     width: 100%;
 }
-#save-profile-container input {
+#save-profile-container input:not([type="color"]) {
     flex: 1;
     min-width: 0;
     padding: 4px 8px;
@@ -194,6 +194,14 @@ input#key-input:focus {
     background: var(--bg);
     color: var(--text);
     font-size: 12px;
+}
+#save-profile-container input[type="color"] {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    height: 40px;
+    padding: 0;
 }
 #save-profile-btn {
     min-width: 30px;
