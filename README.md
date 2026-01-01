@@ -1,16 +1,18 @@
 # SecrEdit - Secure URL Editor
 
-SecrEdit is a privacy-focused, client-side encrypted text editor that stores everything in the URL. It allows you to write, format, and share encrypted notes without any server-side storage.
+SecrEdit is a privacy-focused, client-side text editor that stores everything in the URL. It allows you to write, format, and share encrypted notes (or plaintext notes via the "No Secrets" profile) without any server-side storage.
 
 ![SecrEdit Icon](icon.svg)
 
 ## ✨ Features
 
 - **End-to-End Encryption**: All encryption and decryption happen in your browser. Your secret key never leaves your device.
-- **URL-Based Storage**: The encrypted content is stored entirely in the URL fragment (hash), making it easy to bookmark or share.
+- **URL-Based Storage**: The content is stored entirely in the URL fragment (hash), making it easy to bookmark or share.
 - **Compression**: Uses Gzip compression to maximize the amount of text you can store in a URL.
 - **Progressive Web App (PWA)**: Installable on mobile and desktop for offline use.
-- **File Support**: Export and import encrypted notes as `.secredit` files.
+- **Key Profiles**: Save multiple key profiles (with colors) and quickly switch between them.
+- **Plaintext Mode**: Use the built-in "No Secrets" profile to store plaintext (still compressed) in the URL.
+- **File Support**: Export and import notes as `.secredit` files (encrypted or plaintext depending on profile).
 - **Find & Replace**: Integrated search and replace functionality.
 - **Emoji Picker**: Quick access to emojis for your notes.
 - **Dark Mode**: Automatic dark mode support based on system preferences.
@@ -53,11 +55,19 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 
 ## 📖 How to Use
 
-1. **Enter a Secret Key**: Type a strong password in the top input field.
-2. **Write Your Note**: Type your content in the editor. The URL will update automatically.
-3. **Save/Share**: Copy the URL to your bookmarks or share it with someone who has the key.
-5. **Export**: Use the 💾 button to save an encrypted `.secredit` file to your computer.
-6. **Third-Party messaging apps**: You can use SecrEdit with third-party messaging apps that support sharing links.
+1. **Pick a Profile**: Open the profiles menu and select a saved profile (or "No Secrets" for plaintext).
+2. **Enter the Key (if needed)**: If you selected an encrypted profile, enter a strong password.
+3. **Write Your Note**: Type your content in the editor. The URL updates automatically.
+4. **Save/Share**: Bookmark or share the URL. The URL includes the profile name so SecrEdit can auto-select it when opened.
+5. **Export/Import**: Export a `.secredit` file for sharing or backup, and import it later to restore the note.
+6. **Missing profile flow**: If you open a URL/file referencing a profile you don't have, SecrEdit opens the profile manager with the name pre-filled so you can create it by entering the password.
+
+## 🔑 Profiles
+
+- The profile name is stored in the URL fragment, so opening a link can automatically select the right profile.
+- The built-in "No Secrets" profile always stores plaintext (compressed) and requires no password.
+- Profile colors can be changed from the profile manager list.
+- Duplicate profile names are prevented (saving an existing name updates it instead of creating another entry).
 
 ## 🤝 Credits
 

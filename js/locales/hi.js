@@ -9,7 +9,7 @@ window.SecrEditLocales.hi = {
         "key_title": "एन्क्रिप्शन पासवर्ड",
         "show_hide_pass": "पासवर्ड दिखाएं/छिपाएं",
         "status_ready": "तैयार",
-        "ready_encrypted": "तैयार (एन्क्रिप्टेड)",
+        "ready_encrypted": "एन्क्रिप्टेड",
         "chars_count": "{{count}} अक्षर",
         "chars_count_one": "{{count}} अक्षर",
         "url_count_title": "URL लंबाई (ब्राउज़र सीमा: ~2k-8k)",
@@ -28,7 +28,7 @@ window.SecrEditLocales.hi = {
         "replace_current": "बदलें",
         "replace_all": "सभी",
         "close": "बंद करें",
-        "editor_placeholder": "दर्ज किया गया टेक्स्ट एन्क्रिप्ट किया जाएगा और ऊपर दी गई कुंजी का उपयोग करके URL में संग्रहीत किया जाएगा (सादे पाठ के रूप में सहेजने के लिए कुंजी खाली छोड़ दें)।",
+        "editor_placeholder": "टेक्स्ट URL में संकुचित होता है और यदि 'कोई रहस्य नहीं' के अलावा कोई प्रोफ़ाइल चुनी जाती है तो एन्क्रिप्ट किया जाता है।",
         "weak_key": "कमजोर कुंजी!",
         "unencrypted": "एन्क्रिप्ट नहीं किया गया",
         "secret_key_required": "गुप्त कुंजी आवश्यक",
@@ -55,6 +55,17 @@ window.SecrEditLocales.hi = {
         "operation_failed": "ऑपरेशन विफल",
         "invalid_request": "अमान्य अनुरोध",
         "timeout": "समय समाप्त",
-        "update_available": "अपडेट उपलब्ध है। रीलोड करने के लिए क्लिक करें।"
+        "update_available": "अपडेट उपलब्ध है। रीलोड करने के लिए क्लिक करें।",
+        "profiles_btn": "की प्रोफाइल",
+        "save_profile": "प्रोफ़ाइल के रूप में सहेजें",
+        "profile_name": "प्रोफ़ाइल नाम",
+        "delete_profile": "हटाएं",
+        "no_profiles": "कोई प्रोफ़ाइल सहेजी नहीं गई",
+        "profile_saved": "प्रोफ़ाइल सहेजी गई",
+        "profile_deleted": "प्रोफ़ाइल हटाई गई",
+        "manage_profiles": "प्रोफ़ाइल प्रबंधित करें",
+        "name_required": "नाम आवश्यक है",
+        "key_required": "की (key) आवश्यक है",
+        "no_secrets": "कोई रहस्य नहीं"
     }
 };

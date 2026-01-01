@@ -9,7 +9,7 @@ window.SecrEditLocales.bn = {
         "key_title": "এনক্রিপশন পাসওয়ার্ড",
         "show_hide_pass": "পাসওয়ার্ড দেখান/লুকান",
         "status_ready": "প্রস্তুত",
-        "ready_encrypted": "প্রস্তুত (এনক্রিপ্ট করা)",
+        "ready_encrypted": "এনক্রিপ্ট করা",
         "chars_count": "{{count}} অক্ষর",
         "chars_count_one": "{{count}} অক্ষর",
         "url_count_title": "URL দৈর্ঘ্য (ব্রাউজার সীমা: ~2k-8k)",
@@ -28,7 +28,7 @@ window.SecrEditLocales.bn = {
         "replace_current": "প্রতিস্থাপন",
         "replace_all": "সব",
         "close": "বন্ধ",
-        "editor_placeholder": "প্রবেশ করা টেক্সট উপরের চাবিকাঠি ব্যবহার করে এনক্রিপ্ট করা হবে এবং URL-এ সংরক্ষণ করা হবে (প্লেইন টেক্সট হিসেবে সংরক্ষণ করতে চাবিকাঠি খালি রাখুন)।",
+        "editor_placeholder": "টেক্সট URL-এ সংকুচিত হয় এবং 'কোনো গোপনীয়তা নেই' ছাড়া অন্য প্রোফাইল নির্বাচন করলে এনক্রিপ্ট করা হয়।",
         "weak_key": "দুর্বল চাবিকাঠি!",
         "unencrypted": "এনক্রিপ্ট করা হয়নি",
         "secret_key_required": "গোপন চাবিকাঠি প্রয়োজন",
@@ -55,6 +55,17 @@ window.SecrEditLocales.bn = {
         "operation_failed": "অপারেশন ব্যর্থ হয়েছে",
         "invalid_request": "অবৈধ অনুরোধ",
         "timeout": "সময় শেষ",
-        "update_available": "আপডেট উপলব্ধ। রিলোড করতে ক্লিক করুন।"
+        "update_available": "আপডেট উপলব্ধ। রিলোড করতে ক্লিক করুন।",
+        "profiles_btn": "কী প্রোফাইল",
+        "save_profile": "প্রোফাইল হিসেবে সংরক্ষণ করুন",
+        "profile_name": "প্রোফাইলের নাম",
+        "delete_profile": "মুছে ফেলুন",
+        "no_profiles": "কোনো প্রোফাইল সংরক্ষিত নেই",
+        "profile_saved": "প্রোফাইল সংরক্ষিত হয়েছে",
+        "profile_deleted": "প্রোফাইল মুছে ফেলা হয়েছে",
+        "manage_profiles": "প্রোফাইল পরিচালনা করুন",
+        "name_required": "নাম প্রয়োজন",
+        "key_required": "কী (key) প্রয়োজন",
+        "no_secrets": "কোনো গোপনীয়তা নেই"
     }
 };

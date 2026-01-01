@@ -9,7 +9,7 @@ window.SecrEditLocales.zh = {
         "key_title": "加密密码",
         "show_hide_pass": "显示/隐藏密码",
         "status_ready": "就绪",
-        "ready_encrypted": "就绪 (已加密)",
+        "ready_encrypted": "已加密",
         "chars_count": "{{count}} 字符",
         "chars_count_one": "{{count}} 字符",
         "url_count_title": "URL 长度 (浏览器限制: ~2k-8k)",
@@ -28,7 +28,7 @@ window.SecrEditLocales.zh = {
         "replace_current": "替换",
         "replace_all": "全部",
         "close": "关闭",
-        "editor_placeholder": "输入的文本将被加密并使用上面的密钥存储在 URL 中（留空密钥以保存为纯文本）。",
+        "editor_placeholder": "文本在 URL 中压缩，如果选择了除“没有秘密”以外的配置，则会被加密。",
         "weak_key": "密钥太弱！",
         "unencrypted": "未加密",
         "secret_key_required": "需要密钥",
@@ -55,6 +55,17 @@ window.SecrEditLocales.zh = {
         "operation_failed": "操作失败",
         "invalid_request": "无效请求",
         "timeout": "超时",
-        "update_available": "有可用更新。点击重新加载。"
+        "update_available": "有可用更新。点击重新加载。",
+        "profiles_btn": "密钥配置",
+        "save_profile": "保存为配置",
+        "profile_name": "配置名称",
+        "delete_profile": "删除",
+        "no_profiles": "没有保存的配置",
+        "profile_saved": "配置已保存",
+        "profile_deleted": "配置已删除",
+        "manage_profiles": "管理配置",
+        "name_required": "需要名称",
+        "key_required": "需要密钥",
+        "no_secrets": "没有秘密"
     }
 };

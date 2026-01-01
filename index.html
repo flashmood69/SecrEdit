@@ -21,29 +21,20 @@
             <button id="lang-btn" title="Language" aria-label="Language"></button>
             <div id="lang-popover"></div>
         </div>
-        <div class="controls">
-            <form class="input-wrapper">
-                <input type="text" name="username" value="SecrEdit User" autocomplete="username" class="sr-only" aria-hidden="true" data-i18n-value="username">
-                <input type="password" id="key-input" placeholder="Secret key..." title="Encryption password" autocomplete="new-password" data-i18n-placeholder="key_placeholder" data-i18n-title="key_title">
-                <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
-                <button id="toggle-pass" title="Show/Hide password" type="button" aria-label="Toggle Password Visibility" data-i18n-title="show_hide_pass" data-i18n-aria-label="show_hide_pass">👁️</button>
-            </form>
+        <div class="profile-wrapper">
+            <button id="profile-btn" title="Key Profiles" aria-label="Key Profiles" type="button" data-i18n-title="profiles_btn">👤</button>
+            <div id="profile-popover"></div>
         </div>
-        <div id="info-bar">
-            <span class="status" id="status" data-i18n="status_ready">Ready</span>
-            <span class="char-count" id="char-count" data-i18n="chars_count" data-i18n-options='{"count": 0}'>0 chars</span>
-            <span class="char-count" id="url-count" title="URL length (Browser limits: ~2k-8k)" data-i18n="url_label" data-i18n-options='{"count": 0}' data-i18n-title="url_count_title">URL: 0</span>
-        </div>
-    </div>
-     <div class="btn-group">
         <div class="emoji-wrapper">
             <button id="emoji-btn" title="Insert emoji" type="button" aria-label="Open Emoji Picker" data-i18n-title="emoji_btn" data-i18n-aria-label="emoji_btn">😊</button>
             <div id="emoji-popover"></div>
         </div>
+        <button id="copySecretBtn" title="Copy URL" aria-label="Copy URL" data-i18n-title="copy_url" data-i18n-aria-label="copy_url">🔗</button>
+    </div>
+     <div class="btn-group">
         <button id="clearBtn" title="New document" aria-label="New Document" data-i18n-title="new_doc" data-i18n-aria-label="new_doc">📄</button>
         <button id="exportBtn" title="Download encrypted file (.secredit)" aria-label="Export File" data-i18n-title="export_file" data-i18n-aria-label="export_file">💾</button>
         <button id="importBtn" title="Open encrypted file (.secredit)" aria-label="Import File" data-i18n-title="import_file" data-i18n-aria-label="import_file">📂</button>
-        <button id="copySecretBtn" title="Copy URL" aria-label="Copy URL" data-i18n-title="copy_url" data-i18n-aria-label="copy_url">🔗</button>
         <button id="findBtn" title="Find and Replace" aria-label="Find and Replace" data-i18n-title="find_replace" data-i18n-aria-label="find_replace">🔍</button>
         <button id="copyTextBtn" title="Copy text to clipboard" aria-label="Copy Text" data-i18n-title="copy_text" data-i18n-aria-label="copy_text">📑</button>
         <button id="pasteBtn" title="Paste text from clipboard" aria-label="Paste Text" data-i18n-title="paste_text" data-i18n-aria-label="paste_text">📋</button>
@@ -60,8 +51,17 @@
 </div>
 
 <div id="main-container">
-     <textarea id="editor" placeholder="Entered text will be encrypted and stored in the URL using the key above (leave the key empty to save as plain text)." data-i18n-placeholder="editor_placeholder"></textarea>
+     <textarea id="editor" placeholder="Text is compressed in the URL and encrypted if a profile other than 'No Secrets' is selected." data-i18n-placeholder="editor_placeholder"></textarea>
  </div>
+ 
+ <footer id="footer">
+    <div id="info-bar">
+        <span id="profile-name" class="status" data-i18n="no_secrets">No Secrets</span>
+        <span class="char-count" id="char-count" data-i18n="chars_count" data-i18n-options='{"count": 0}'>0 chars</span>
+        <span class="char-count" id="url-count" title="URL length (Browser limits: ~2k-8k)" data-i18n="url_label" data-i18n-options='{"count": 0}' data-i18n-title="url_count_title">URL: 0</span>
+        <span class="status" id="status" data-i18n="status_ready" style="margin-left: auto;">Ready</span>
+    </div>
+</footer>
 
 <script src="js/locales/en.js"></script>
 <script src="js/locales/es.js"></script>

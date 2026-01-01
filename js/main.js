@@ -1,4 +1,4 @@
-import { decodePlaintextFromHash, encodePlaintextForHash } from './encoding.js';
+import { decodePlaintextFromHash } from './encoding.js';
 import { startUi } from './ui.js';
 
 if (window.top !== window.self) {
@@ -46,5 +46,4 @@ const encrypt = ({ text, password, iterations }) => callWorker({ type: 'encrypt'
 const decrypt = ({ payload, password, iterations }) => callWorker({ type: 'decrypt', payload, password, iterations });
 
 const i18n = window.I18n;
-startUi({ i18n, encrypt, decrypt, kdfIterations: KDF_ITERATIONS, encodePlaintextForHash, decodePlaintextFromHash });
-
+startUi({ i18n, encrypt, decrypt, kdfIterations: KDF_ITERATIONS, decodePlaintextFromHash });

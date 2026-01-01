@@ -9,7 +9,7 @@ window.SecrEditLocales.ar = {
         "key_title": "كلمة مرور التشفير",
         "show_hide_pass": "إظهار/إخفاء كلمة المرور",
         "status_ready": "جاهز",
-        "ready_encrypted": "جاهز (مشفر)",
+        "ready_encrypted": "مشفر",
         "chars_count": "{{count}} حرف",
         "chars_count_one": "حرف واحد",
         "url_count_title": "طول الرابط (حدود المتصفح: ~2k-8k)",
@@ -28,7 +28,7 @@ window.SecrEditLocales.ar = {
         "replace_current": "استبدال",
         "replace_all": "الكل",
         "close": "إغلاق",
-        "editor_placeholder": "سيتم تشفير النص المدخل وتخزينه في الرابط باستخدام المفتاح أعلاه (اترك المفتاح فارغًا للحفظ كنص عادي).",
+        "editor_placeholder": "يتم ضغط النص في الرابط وتشفيره إذا تم تحديد ملف تعريف غير 'بدون أسرار'.",
         "weak_key": "مفتاح ضعيف!",
         "unencrypted": "غير مشفر",
         "secret_key_required": "المفتاح السري مطلوب",
@@ -55,6 +55,17 @@ window.SecrEditLocales.ar = {
         "operation_failed": "فشلت العملية",
         "invalid_request": "طلب غير صالح",
         "timeout": "انتهى الوقت",
-        "update_available": "تحديث متاح. انقر لإعادة التحميل."
+        "update_available": "تحديث متاح. انقر لإعادة التحميل.",
+        "profiles_btn": "ملفات المفاتيح",
+        "save_profile": "حفظ كملف تعريف",
+        "profile_name": "اسم ملف التعريف",
+        "delete_profile": "حذف",
+        "no_profiles": "لا توجد ملفات تعريف محفوظة",
+        "profile_saved": "تم حفظ ملف التعريف",
+        "profile_deleted": "تم حذف ملف التعريف",
+        "manage_profiles": "إدارة ملفات التعريف",
+        "name_required": "الاسم مطلوب",
+        "key_required": "المفتاح مطلوب",
+        "no_secrets": "بدون أسرار"
     }
 };

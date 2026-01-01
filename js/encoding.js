@@ -24,10 +24,4 @@ export const gunzipToText = async (bytes) => {
     return utf8Decode(new Uint8Array(await new Response(stream).arrayBuffer()));
 };
 
-export const encodePlaintextForHash = async (text) => {
-    const gz = await gzipBytes(utf8Encode(text));
-    return `${PLAINTEXT_PREFIX}${b64UrlEncodeBytes(gz)}`;
-};
-
 export const decodePlaintextFromHash = async (payload) => gunzipToText(b64UrlDecodeToBytes(payload));
-
