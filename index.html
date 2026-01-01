@@ -17,10 +17,6 @@
 <header id="header">
      <div id="header-top">
         <button id="burger-btn" title="Toggle Menu" aria-label="Toggle Menu" data-i18n-title="toggle_menu" data-i18n-aria-label="toggle_menu">✕</button>
-        <div class="lang-wrapper">
-            <button id="lang-btn" title="Language" aria-label="Language"></button>
-            <div id="lang-popover"></div>
-        </div>
         <div class="profile-wrapper">
             <button id="profile-btn" title="Key Profiles" aria-label="Key Profiles" type="button" data-i18n-title="profiles_btn">👤</button>
             <div id="profile-popover"></div>
@@ -30,9 +26,14 @@
             <div id="emoji-popover"></div>
         </div>
         <button id="copySecretBtn" title="Copy URL" aria-label="Copy URL" data-i18n-title="copy_url" data-i18n-aria-label="copy_url">🔗</button>
+        <button id="clearBtn" title="New document" aria-label="New Document" data-i18n-title="new_doc" data-i18n-aria-label="new_doc">📄</button>
+        <button id="md-preview-btn" title="Markdown preview" aria-label="Markdown preview" type="button">MD</button>
     </div>
      <div class="btn-group">
-        <button id="clearBtn" title="New document" aria-label="New Document" data-i18n-title="new_doc" data-i18n-aria-label="new_doc">📄</button>
+        <div class="lang-wrapper">
+            <button id="lang-btn" title="Language" aria-label="Language"></button>
+            <div id="lang-popover"></div>
+        </div>
         <button id="exportBtn" title="Download encrypted file (.secredit)" aria-label="Export File" data-i18n-title="export_file" data-i18n-aria-label="export_file">💾</button>
         <button id="importBtn" title="Open encrypted file (.secredit)" aria-label="Import File" data-i18n-title="import_file" data-i18n-aria-label="import_file">📂</button>
         <button id="findBtn" title="Find and Replace" aria-label="Find and Replace" data-i18n-title="find_replace" data-i18n-aria-label="find_replace">🔍</button>
@@ -52,6 +53,7 @@
 
 <div id="main-container">
      <textarea id="editor" placeholder="Text is compressed in the URL and encrypted if a profile other than 'No Secrets' is selected." data-i18n-placeholder="editor_placeholder"></textarea>
+     <div id="markdown-preview" aria-hidden="true"></div>
  </div>
  
  <footer id="footer">

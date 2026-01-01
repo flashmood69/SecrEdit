@@ -26,6 +26,9 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
     const copyTextBtn = $('copyTextBtn');
     const copySecretBtn = $('copySecretBtn');
     const clearBtn = $('clearBtn');
+    const mdPreviewBtn = $('md-preview-btn');
+    const mainContainer = $('main-container');
+    const markdownPreview = $('markdown-preview');
 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
@@ -101,6 +104,184 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
 
     const isNonEmptyKey = (pw) => typeof pw === 'string' && pw.length > 0;
     const isKeyStrongEnoughToEncrypt = (pw) => typeof pw === 'string' && pw.length >= 8;
+
+    let markdownPreviewEnabled = false;
+    let markdownPreviewFramePending = false;
+
+    const escapeHtml = (s) => {
+        const str = String(s ?? '');
+        return str.replace(/[&<>"']/g, (ch) => (
+            ch === '&' ? '&amp;'
+                : ch === '<' ? '&lt;'
+                    : ch === '>' ? '&gt;'
+                        : ch === '"' ? '&quot;'
+                            : '&#39;'
+        ));
+    };
+
+    const escapeAttr = (s) => escapeHtml(s).replace(/`/g, '&#96;');
+
+    const sanitizeHref = (href) => {
+        const raw = String(href ?? '').trim();
+        if (!raw) return null;
+        const lower = raw.toLowerCase();
+        if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:') || lower.startsWith('#')) return raw;
+        if (raw.startsWith('/') || raw.startsWith('./') || raw.startsWith('../')) return raw;
+        if (!raw.includes(':') && !raw.startsWith('//')) return raw;
+        return null;
+    };
+
+    const formatInlineNoLinks = (raw) => {
+        const inlineCode = [];
+        let s = escapeHtml(raw);
+        s = s.replace(/`([^`]+)`/g, (_m, code) => {
+            const id = inlineCode.length;
+            inlineCode.push(`<code>${code}</code>`);
+            return `\u0000INCODE${id}\u0000`;
+        });
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
+        s = s.replace(/\u0000INCODE(\d+)\u0000/g, (_m, idx) => inlineCode[Number(idx)] || '');
+        return s;
+    };
+
+    const formatInline = (raw) => {
+        const text = String(raw ?? '');
+        const re = /\[([^\]]+)\]\(([^)]+)\)/g;
+        let out = '';
+        let last = 0;
+        for (let m; (m = re.exec(text));) {
+            out += formatInlineNoLinks(text.slice(last, m.index));
+            const label = m[1];
+            const href = sanitizeHref(m[2]);
+            if (!href) {
+                out += formatInlineNoLinks(m[0]);
+            } else {
+                out += `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">${formatInlineNoLinks(label)}</a>`;
+            }
+            last = m.index + m[0].length;
+        }
+        out += formatInlineNoLinks(text.slice(last));
+        return out;
+    };
+
+    const renderMarkdown = (raw) => {
+        const blocks = [];
+        const normalized = String(raw ?? '').replace(/\r\n?/g, '\n');
+        const withBlocks = normalized.replace(/```([\s\S]*?)```/g, (_m, code) => {
+            const id = blocks.length;
+            const cleaned = String(code ?? '').replace(/^\n/, '').replace(/\n$/, '');
+            blocks.push(`<pre><code>${escapeHtml(cleaned)}</code></pre>`);
+            return `\n\u0000BLOCK${id}\u0000\n`;
+        });
+
+        const lines = withBlocks.split('\n');
+        const out = [];
+        let paragraph = '';
+        let listType = null;
+
+        const flushParagraph = () => {
+            if (!paragraph) return;
+            out.push(`<p>${formatInline(paragraph).replace(/\n/g, '<br>')}</p>`);
+            paragraph = '';
+        };
+        const closeList = () => {
+            if (!listType) return;
+            out.push(`</${listType}>`);
+            listType = null;
+        };
+        const openList = (nextType) => {
+            if (listType && listType !== nextType) closeList();
+            if (!listType) {
+                out.push(`<${nextType}>`);
+                listType = nextType;
+            }
+        };
+
+        for (const lineRaw of lines) {
+            const line = String(lineRaw ?? '');
+            const blockMatch = /^\u0000BLOCK(\d+)\u0000$/.exec(line.trim());
+            if (blockMatch) {
+                flushParagraph();
+                closeList();
+                out.push(blocks[Number(blockMatch[1])] || '');
+                continue;
+            }
+
+            if (!line.trim()) {
+                flushParagraph();
+                closeList();
+                continue;
+            }
+
+            const headingMatch = /^(#{1,6})\s+(.*)$/.exec(line);
+            if (headingMatch) {
+                flushParagraph();
+                closeList();
+                const level = Math.min(6, headingMatch[1].length);
+                out.push(`<h${level}>${formatInline(headingMatch[2].trim())}</h${level}>`);
+                continue;
+            }
+
+            const quoteMatch = /^>\s?(.*)$/.exec(line);
+            if (quoteMatch) {
+                flushParagraph();
+                closeList();
+                out.push(`<blockquote>${formatInline(quoteMatch[1].trim())}</blockquote>`);
+                continue;
+            }
+
+            const ulMatch = /^[-*]\s+(.*)$/.exec(line.trimStart());
+            if (ulMatch) {
+                flushParagraph();
+                openList('ul');
+                out.push(`<li>${formatInline(ulMatch[1])}</li>`);
+                continue;
+            }
+
+            const olMatch = /^\d+\.\s+(.*)$/.exec(line.trimStart());
+            if (olMatch) {
+                flushParagraph();
+                openList('ol');
+                out.push(`<li>${formatInline(olMatch[1])}</li>`);
+                continue;
+            }
+
+            closeList();
+            paragraph = paragraph ? `${paragraph}\n${line}` : line;
+        }
+
+        flushParagraph();
+        closeList();
+
+        return out.join('\n');
+    };
+
+    const updateMarkdownPreview = () => {
+        if (!markdownPreviewEnabled || !markdownPreview || !editor) return;
+        markdownPreview.innerHTML = renderMarkdown(editor.value);
+    };
+
+    const scheduleMarkdownPreview = () => {
+        if (!markdownPreviewEnabled) return;
+        if (markdownPreviewFramePending) return;
+        markdownPreviewFramePending = true;
+        requestAnimationFrame(() => {
+            markdownPreviewFramePending = false;
+            updateMarkdownPreview();
+        });
+    };
+
+    const setMarkdownPreviewEnabled = (enabled) => {
+        markdownPreviewEnabled = Boolean(enabled);
+        if (mainContainer) mainContainer.classList.toggle('markdown-split', markdownPreviewEnabled);
+        if (markdownPreview) markdownPreview.setAttribute('aria-hidden', markdownPreviewEnabled ? 'false' : 'true');
+        if (mdPreviewBtn) mdPreviewBtn.classList.toggle('active', markdownPreviewEnabled);
+        if (markdownPreviewEnabled) updateMarkdownPreview();
+        if (editor) editor.focus();
+    };
 
     const updateCounts = () => {
         if (!editor || !charCount || !urlCount) return;
@@ -180,6 +361,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
 
     const scheduleSync = () => {
         updateCounts();
+        scheduleMarkdownPreview();
         clearTimeout(syncTimer);
         syncTimer = setTimeout(syncToHash, SYNC_DEBOUNCE_MS);
     };
@@ -826,7 +1008,14 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
             history.replaceState(null, '', location.pathname);
             updateStrengthMeter();
             updateCounts();
+            scheduleMarkdownPreview();
             editor.focus();
+        });
+    }
+
+    if (mdPreviewBtn) {
+        mdPreviewBtn.addEventListener('click', () => {
+            setMarkdownPreviewEnabled(!markdownPreviewEnabled);
         });
     }
 
