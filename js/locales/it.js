@@ -66,6 +66,7 @@ window.SecrEditLocales.it = {
         "manage_profiles": "Gestisci Profili",
         "name_required": "Nome richiesto",
         "key_required": "Chiave richiesta",
+        "profile_color": "Colore del profilo",
         "no_secrets": "Senza Segreti"
     }
 };

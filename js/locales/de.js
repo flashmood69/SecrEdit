@@ -66,6 +66,7 @@ window.SecrEditLocales.de = {
         "manage_profiles": "Profile verwalten",
         "name_required": "Name erforderlich",
         "key_required": "Schlüssel erforderlich",
+        "profile_color": "Profilfarbe",
         "no_secrets": "Keine Geheimnisse"
     }
 };

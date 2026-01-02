@@ -66,6 +66,7 @@ window.SecrEditLocales.hi = {
         "manage_profiles": "प्रोफ़ाइल प्रबंधित करें",
         "name_required": "नाम आवश्यक है",
         "key_required": "की (key) आवश्यक है",
+        "profile_color": "प्रोफ़ाइल रंग",
         "no_secrets": "कोई रहस्य नहीं"
     }
 };

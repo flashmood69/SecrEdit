@@ -66,6 +66,7 @@ window.SecrEditLocales.ar = {
         "manage_profiles": "إدارة ملفات التعريف",
         "name_required": "الاسم مطلوب",
         "key_required": "المفتاح مطلوب",
+        "profile_color": "لون الملف التعريفي",
         "no_secrets": "بدون أسرار"
     }
 };

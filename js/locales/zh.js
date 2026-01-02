@@ -66,6 +66,7 @@ window.SecrEditLocales.zh = {
         "manage_profiles": "管理配置",
         "name_required": "需要名称",
         "key_required": "需要密钥",
+        "profile_color": "配置颜色",
         "no_secrets": "没有秘密"
     }
 };

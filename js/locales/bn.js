@@ -66,6 +66,7 @@ window.SecrEditLocales.bn = {
         "manage_profiles": "প্রোফাইল পরিচালনা করুন",
         "name_required": "নাম প্রয়োজন",
         "key_required": "কী (key) প্রয়োজন",
+        "profile_color": "প্রোফাইলের রঙ",
         "no_secrets": "কোনো গোপনীয়তা নেই"
     }
 };
