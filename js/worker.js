@@ -1,14 +1,14 @@
 import { decryptPayloadToText, encryptText } from './crypto.js';
 
 self.onmessage = async ({ data }) => {
-    const { id, type, text, password, payload, iterations } = data || {};
+    const { id, type, text, password, payload } = data || {};
     try {
         if (type === 'encrypt') {
-            self.postMessage({ id, result: await encryptText({ text, password, iterations }) });
+            self.postMessage({ id, result: await encryptText({ text, password }) });
             return;
         }
         if (type === 'decrypt') {
-            self.postMessage({ id, result: await decryptPayloadToText({ payload, password, iterations }) });
+            self.postMessage({ id, result: await decryptPayloadToText({ payload, password }) });
             return;
         }
         throw new Error('Invalid request');
@@ -16,4 +16,3 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ id, error: 'Operation failed' });
     }
 };
-

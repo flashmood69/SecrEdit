@@ -1,6 +1,17 @@
 import { decodePlaintextFromHash } from './encoding.js';
 import { startUi } from './ui.js';
 
+const isLocalhost = () => {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+};
+
+if (window.location.protocol === 'http:' && !isLocalhost()) {
+    const url = new URL(window.location.href);
+    url.protocol = 'https:';
+    window.location.replace(url.toString());
+}
+
 if (window.top !== window.self) {
     try {
         window.top.location.href = window.self.location.href;
@@ -9,12 +20,20 @@ if (window.top !== window.self) {
     }
 }
 
-const KDF_ITERATIONS = 600000;
 const WORKER_TIMEOUT_MS = 10000;
 
 let worker;
 let requestId = 0;
 const pending = new Map();
+
+const restartWorkerAndFailPending = (error) => {
+    for (const { reject, timeout } of pending.values()) {
+        clearTimeout(timeout);
+        reject(error);
+    }
+    pending.clear();
+    initWorker();
+};
 
 const initWorker = () => {
     if (worker) worker.terminate();
@@ -27,13 +46,16 @@ const initWorker = () => {
         pending.delete(id);
         error ? entry.reject(error) : entry.resolve(result);
     };
-    worker.onerror = () => initWorker();
+    worker.onerror = () => restartWorkerAndFailPending('Operation failed');
 };
 
 const callWorker = (msg) => new Promise((resolve, reject) => {
     const id = requestId++;
     const timeout = setTimeout(() => {
+        const entry = pending.get(id);
+        if (!entry) return;
         pending.delete(id);
+        restartWorkerAndFailPending('Timeout');
         reject('Timeout');
     }, WORKER_TIMEOUT_MS);
     pending.set(id, { resolve, reject, timeout });
@@ -42,8 +64,8 @@ const callWorker = (msg) => new Promise((resolve, reject) => {
 
 initWorker();
 
-const encrypt = ({ text, password, iterations }) => callWorker({ type: 'encrypt', text, password, iterations });
-const decrypt = ({ payload, password, iterations }) => callWorker({ type: 'decrypt', payload, password, iterations });
+const encrypt = ({ text, password }) => callWorker({ type: 'encrypt', text, password });
+const decrypt = ({ payload, password }) => callWorker({ type: 'decrypt', payload, password });
 
 const i18n = window.I18n;
-startUi({ i18n, encrypt, decrypt, kdfIterations: KDF_ITERATIONS, decodePlaintextFromHash });
+startUi({ i18n, encrypt, decrypt, decodePlaintextFromHash });

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure URL Editor</title>
     <meta name="referrer" content="no-referrer">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; connect-src 'none'; img-src 'self' data:; script-src 'self'; style-src 'self'; worker-src 'self' blob:; manifest-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; connect-src 'none'; img-src 'self' data:; script-src 'self'; style-src 'self'; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; upgrade-insecure-requests;">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#6c5ce7">
     <link rel="apple-touch-icon" href="assets/icon.svg">
@@ -27,7 +27,6 @@
         </div>
         <button id="copySecretBtn" title="Copy URL" aria-label="Copy URL" data-i18n-title="copy_url" data-i18n-aria-label="copy_url">🔗</button>
         <button id="clearBtn" title="New document" aria-label="New Document" data-i18n-title="new_doc" data-i18n-aria-label="new_doc">📄</button>
-        <button id="md-preview-btn" title="Markdown preview" aria-label="Markdown preview" type="button">MD</button>
     </div>
      <div class="btn-group">
         <div class="lang-wrapper">
@@ -53,7 +52,6 @@
 
 <div id="main-container">
      <textarea id="editor" placeholder="Text is compressed in the URL and encrypted if a profile other than 'No Secrets' is selected. Use 👤 to manage profiles. Click 🔗 to copy a link to this message." data-i18n-placeholder="editor_placeholder"></textarea>
-     <div id="markdown-preview" aria-hidden="true"></div>
  </div>
  
  <footer id="footer">

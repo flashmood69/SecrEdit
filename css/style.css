@@ -74,29 +74,6 @@ input#key-input:focus {
 
 .sr-only { display: none; }
 #main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
-#main-container.markdown-split { flex-direction: row; }
-#main-container:not(.markdown-split) #markdown-preview { display: none; }
-#main-container.markdown-split #markdown-preview { display: block; }
-#markdown-preview {
-    flex: 1;
-    overflow: auto;
-    padding: 25px;
-    border-left: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    box-sizing: border-box;
-    -webkit-overflow-scrolling: touch;
-    font-size: 16px;
-    line-height: 1.6;
-}
-#markdown-preview h1, #markdown-preview h2, #markdown-preview h3, #markdown-preview h4, #markdown-preview h5, #markdown-preview h6 { margin: 0.6em 0 0.4em; line-height: 1.25; }
-#markdown-preview p { margin: 0.5em 0; }
-#markdown-preview ul, #markdown-preview ol { margin: 0.5em 0 0.5em 1.4em; }
-#markdown-preview blockquote { margin: 0.6em 0; padding: 0.2em 0 0.2em 0.8em; border-left: 3px solid var(--border); opacity: 0.95; }
-#markdown-preview code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95em; background: rgba(0,0,0,0.06); padding: 0.15em 0.35em; border-radius: 4px; }
-#markdown-preview pre { overflow: auto; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.06); border: 1px solid var(--border); }
-#markdown-preview pre code { background: transparent; padding: 0; }
-#markdown-preview a { color: var(--accent); text-decoration: underline; }
 #close-find-btn { background: transparent; color: var(--text); font-size: 18px; }
 
 /* Emoji Picker & Language Picker & Profile Picker */

@@ -2,7 +2,7 @@ import { PLAINTEXT_PREFIX, b64UrlDecodeToBytes, b64UrlEncodeBytes, gzipBytes, ut
 
 const $ = (id) => document.getElementById(id);
 
-export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintextFromHash }) => {
+export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => {
     const header = $('header');
     const burgerBtn = $('burger-btn');
     const editor = $('editor');
@@ -26,9 +26,6 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
     const copyTextBtn = $('copyTextBtn');
     const copySecretBtn = $('copySecretBtn');
     const clearBtn = $('clearBtn');
-    const mdPreviewBtn = $('md-preview-btn');
-    const mainContainer = $('main-container');
-    const markdownPreview = $('markdown-preview');
 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
@@ -104,184 +101,6 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
 
     const isNonEmptyKey = (pw) => typeof pw === 'string' && pw.length > 0;
     const isKeyStrongEnoughToEncrypt = (pw) => typeof pw === 'string' && pw.length >= 8;
-
-    let markdownPreviewEnabled = false;
-    let markdownPreviewFramePending = false;
-
-    const escapeHtml = (s) => {
-        const str = String(s ?? '');
-        return str.replace(/[&<>"']/g, (ch) => (
-            ch === '&' ? '&amp;'
-                : ch === '<' ? '&lt;'
-                    : ch === '>' ? '&gt;'
-                        : ch === '"' ? '&quot;'
-                            : '&#39;'
-        ));
-    };
-
-    const escapeAttr = (s) => escapeHtml(s).replace(/`/g, '&#96;');
-
-    const sanitizeHref = (href) => {
-        const raw = String(href ?? '').trim();
-        if (!raw) return null;
-        const lower = raw.toLowerCase();
-        if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:') || lower.startsWith('#')) return raw;
-        if (raw.startsWith('/') || raw.startsWith('./') || raw.startsWith('../')) return raw;
-        if (!raw.includes(':') && !raw.startsWith('//')) return raw;
-        return null;
-    };
-
-    const formatInlineNoLinks = (raw) => {
-        const inlineCode = [];
-        let s = escapeHtml(raw);
-        s = s.replace(/`([^`]+)`/g, (_m, code) => {
-            const id = inlineCode.length;
-            inlineCode.push(`<code>${code}</code>`);
-            return `\u0000INCODE${id}\u0000`;
-        });
-        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-        s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
-        s = s.replace(/\u0000INCODE(\d+)\u0000/g, (_m, idx) => inlineCode[Number(idx)] || '');
-        return s;
-    };
-
-    const formatInline = (raw) => {
-        const text = String(raw ?? '');
-        const re = /\[([^\]]+)\]\(([^)]+)\)/g;
-        let out = '';
-        let last = 0;
-        for (let m; (m = re.exec(text));) {
-            out += formatInlineNoLinks(text.slice(last, m.index));
-            const label = m[1];
-            const href = sanitizeHref(m[2]);
-            if (!href) {
-                out += formatInlineNoLinks(m[0]);
-            } else {
-                out += `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">${formatInlineNoLinks(label)}</a>`;
-            }
-            last = m.index + m[0].length;
-        }
-        out += formatInlineNoLinks(text.slice(last));
-        return out;
-    };
-
-    const renderMarkdown = (raw) => {
-        const blocks = [];
-        const normalized = String(raw ?? '').replace(/\r\n?/g, '\n');
-        const withBlocks = normalized.replace(/```([\s\S]*?)```/g, (_m, code) => {
-            const id = blocks.length;
-            const cleaned = String(code ?? '').replace(/^\n/, '').replace(/\n$/, '');
-            blocks.push(`<pre><code>${escapeHtml(cleaned)}</code></pre>`);
-            return `\n\u0000BLOCK${id}\u0000\n`;
-        });
-
-        const lines = withBlocks.split('\n');
-        const out = [];
-        let paragraph = '';
-        let listType = null;
-
-        const flushParagraph = () => {
-            if (!paragraph) return;
-            out.push(`<p>${formatInline(paragraph).replace(/\n/g, '<br>')}</p>`);
-            paragraph = '';
-        };
-        const closeList = () => {
-            if (!listType) return;
-            out.push(`</${listType}>`);
-            listType = null;
-        };
-        const openList = (nextType) => {
-            if (listType && listType !== nextType) closeList();
-            if (!listType) {
-                out.push(`<${nextType}>`);
-                listType = nextType;
-            }
-        };
-
-        for (const lineRaw of lines) {
-            const line = String(lineRaw ?? '');
-            const blockMatch = /^\u0000BLOCK(\d+)\u0000$/.exec(line.trim());
-            if (blockMatch) {
-                flushParagraph();
-                closeList();
-                out.push(blocks[Number(blockMatch[1])] || '');
-                continue;
-            }
-
-            if (!line.trim()) {
-                flushParagraph();
-                closeList();
-                continue;
-            }
-
-            const headingMatch = /^(#{1,6})\s+(.*)$/.exec(line);
-            if (headingMatch) {
-                flushParagraph();
-                closeList();
-                const level = Math.min(6, headingMatch[1].length);
-                out.push(`<h${level}>${formatInline(headingMatch[2].trim())}</h${level}>`);
-                continue;
-            }
-
-            const quoteMatch = /^>\s?(.*)$/.exec(line);
-            if (quoteMatch) {
-                flushParagraph();
-                closeList();
-                out.push(`<blockquote>${formatInline(quoteMatch[1].trim())}</blockquote>`);
-                continue;
-            }
-
-            const ulMatch = /^[-*]\s+(.*)$/.exec(line.trimStart());
-            if (ulMatch) {
-                flushParagraph();
-                openList('ul');
-                out.push(`<li>${formatInline(ulMatch[1])}</li>`);
-                continue;
-            }
-
-            const olMatch = /^\d+\.\s+(.*)$/.exec(line.trimStart());
-            if (olMatch) {
-                flushParagraph();
-                openList('ol');
-                out.push(`<li>${formatInline(olMatch[1])}</li>`);
-                continue;
-            }
-
-            closeList();
-            paragraph = paragraph ? `${paragraph}\n${line}` : line;
-        }
-
-        flushParagraph();
-        closeList();
-
-        return out.join('\n');
-    };
-
-    const updateMarkdownPreview = () => {
-        if (!markdownPreviewEnabled || !markdownPreview || !editor) return;
-        markdownPreview.innerHTML = renderMarkdown(editor.value);
-    };
-
-    const scheduleMarkdownPreview = () => {
-        if (!markdownPreviewEnabled) return;
-        if (markdownPreviewFramePending) return;
-        markdownPreviewFramePending = true;
-        requestAnimationFrame(() => {
-            markdownPreviewFramePending = false;
-            updateMarkdownPreview();
-        });
-    };
-
-    const setMarkdownPreviewEnabled = (enabled) => {
-        markdownPreviewEnabled = Boolean(enabled);
-        if (mainContainer) mainContainer.classList.toggle('markdown-split', markdownPreviewEnabled);
-        if (markdownPreview) markdownPreview.setAttribute('aria-hidden', markdownPreviewEnabled ? 'false' : 'true');
-        if (mdPreviewBtn) mdPreviewBtn.classList.toggle('active', markdownPreviewEnabled);
-        if (markdownPreviewEnabled) updateMarkdownPreview();
-        if (editor) editor.focus();
-    };
 
     const updateCounts = () => {
         if (!editor || !charCount || !urlCount) return;
@@ -361,7 +180,6 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
 
     const scheduleSync = () => {
         updateCounts();
-        scheduleMarkdownPreview();
         clearTimeout(syncTimer);
         syncTimer = setTimeout(syncToHash, SYNC_DEBOUNCE_MS);
     };
@@ -393,7 +211,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
 
         setStatus('encrypting');
         try {
-            const encrypted = await encrypt({ text, password: key, iterations: kdfIterations });
+            const encrypted = await encrypt({ text, password: key });
             if (!encrypted) throw new Error('No result');
             const selectedProfileName = getSelectedProfileName();
             const payload = `${PROFILE_PREFIX}${encodeProfileName(selectedProfileName)}:${encrypted}`;
@@ -405,7 +223,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         }
     };
 
-    const performDecryption = async (data, password, iterations) => {
+    const performDecryption = async (data, password) => {
         if (!data || !editor) return false;
 
         const currentId = ++lastDecryptionId;
@@ -443,20 +261,16 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         }
 
         setStatus('decrypting');
-        const candidates = iterations ? [iterations] : [kdfIterations, 100000, 300000, 1000000];
-
-        for (const iter of candidates) {
-            try {
-                if (currentId !== lastDecryptionId) return false;
-                const dec = await decrypt({ payload: data, password: password || '', iterations: iter });
-                if (currentId !== lastDecryptionId) return false;
-                editor.value = dec;
-                setStatus('decrypted');
-                updateCounts();
-                scheduleSync();
-                return true;
-            } catch {}
-        }
+        try {
+            if (currentId !== lastDecryptionId) return false;
+            const dec = await decrypt({ payload: data, password: password || '' });
+            if (currentId !== lastDecryptionId) return false;
+            editor.value = dec;
+            setStatus('decrypted');
+            updateCounts();
+            scheduleSync();
+            return true;
+        } catch {}
 
         if (currentId === lastDecryptionId) setStatus('wrong_key');
         return false;
@@ -557,20 +371,138 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
     });
 
     // Profile Management
-    const loadProfiles = () => {
+    const ENCRYPTED_PROFILES_KEY = 'secredit_profiles_enc';
+    const ENCRYPTED_PROFILES_SALT_KEY = 'secredit_profiles_enc_salt';
+    const ENCRYPTED_PROFILES_CHECK_KEY = 'secredit_profiles_enc_check';
+    const PROFILE_KDF_ITERATIONS = 600000;
+
+    let profilesMasterKey = null;
+
+    const deriveProfilesMasterKey = async (masterPassword, salt) => {
+        const material = await crypto.subtle.importKey('raw', utf8Encode(masterPassword), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations: PROFILE_KDF_ITERATIONS, hash: 'SHA-256' },
+            material,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    };
+
+    const encryptStringWithKey = async (key, plaintext) => {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, utf8Encode(String(plaintext ?? '')));
+        return { iv: b64UrlEncodeBytes(iv), ct: b64UrlEncodeBytes(new Uint8Array(ciphertext)) };
+    };
+
+    const decryptStringWithKey = async (key, enc) => {
+        if (!enc || typeof enc !== 'object') throw new Error('Invalid data');
+        const iv = b64UrlDecodeToBytes(enc.iv);
+        const ct = b64UrlDecodeToBytes(enc.ct);
+        const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+        return utf8Decode(new Uint8Array(plaintext));
+    };
+
+    const loadProfilesSalt = () => {
+        const raw = localStorage.getItem(ENCRYPTED_PROFILES_SALT_KEY);
+        if (!raw) return null;
         try {
-            return JSON.parse(localStorage.getItem('secredit_profiles') || '[]');
+            const bytes = b64UrlDecodeToBytes(raw);
+            return bytes && bytes.length ? bytes : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const getOrCreateProfilesSalt = () => {
+        const existing = loadProfilesSalt();
+        if (existing) return existing;
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        localStorage.setItem(ENCRYPTED_PROFILES_SALT_KEY, b64UrlEncodeBytes(salt));
+        return salt;
+    };
+
+    const getMasterPasswordForCreate = () => {
+        const pw1 = window.prompt('Create a master password to protect saved profiles');
+        if (!pw1) return null;
+        const pw2 = window.prompt('Confirm master password');
+        if (!pw2 || pw1 !== pw2) return null;
+        return pw1;
+    };
+
+    const getMasterPasswordForUnlock = () => window.prompt('Enter master password to unlock saved profiles');
+
+    const ensureMasterKeyUnlocked = async () => {
+        if (profilesMasterKey) return profilesMasterKey;
+
+        const salt = loadProfilesSalt();
+        const hasCheck = Boolean(localStorage.getItem(ENCRYPTED_PROFILES_CHECK_KEY));
+        const masterPassword = hasCheck ? getMasterPasswordForUnlock() : getMasterPasswordForCreate();
+        if (!masterPassword) throw new Error('Operation failed');
+
+        const actualSalt = salt || getOrCreateProfilesSalt();
+        const key = await deriveProfilesMasterKey(masterPassword, actualSalt);
+
+        const checkRaw = localStorage.getItem(ENCRYPTED_PROFILES_CHECK_KEY);
+        if (checkRaw) {
+            let check;
+            try {
+                check = JSON.parse(checkRaw);
+            } catch {
+                throw new Error('Operation failed');
+            }
+            await decryptStringWithKey(key, check);
+        } else {
+            const check = await encryptStringWithKey(key, 'ok');
+            localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(check));
+        }
+
+        profilesMasterKey = key;
+        return key;
+    };
+
+    const loadEncryptedProfiles = () => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(ENCRYPTED_PROFILES_KEY) || '[]');
+            if (!Array.isArray(parsed)) return [];
+            return parsed
+                .filter((p) => p && typeof p === 'object' && typeof p.name === 'string' && p.name)
+                .map((p) => ({
+                    name: p.name,
+                    color: typeof p.color === 'string' && p.color ? p.color : '#6c5ce7',
+                    passEnc: p.passEnc
+                }));
         } catch {
             return [];
         }
     };
 
-    const saveProfiles = (profiles) => {
-        localStorage.setItem('secredit_profiles', JSON.stringify(profiles));
+    const saveEncryptedProfiles = (profiles) => {
+        const sanitized = Array.isArray(profiles) ? profiles
+            .filter((p) => p && typeof p === 'object' && typeof p.name === 'string' && p.name)
+            .map((p) => ({
+                name: p.name,
+                color: typeof p.color === 'string' && p.color ? p.color : '#6c5ce7',
+                passEnc: p.passEnc
+            })) : [];
+        localStorage.setItem(ENCRYPTED_PROFILES_KEY, JSON.stringify(sanitized));
     };
 
-    const renderProfiles = (opts = {}) => {
-        const profiles = loadProfiles();
+    const loadProfiles = async () => {
+        return loadEncryptedProfiles();
+    };
+
+    const saveProfiles = (profiles) => {
+        saveEncryptedProfiles(profiles);
+    };
+
+    const renderProfiles = async (opts = {}) => {
+        let profiles = [];
+        try {
+            profiles = await loadProfiles();
+        } catch {
+            profiles = [];
+        }
         profilePopover.innerHTML = '';
 
         const saveContainer = document.createElement('div');
@@ -665,7 +597,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         saveBtn.style.width = '100%';
         saveBtn.style.padding = '8px';
         
-        const handleSave = (e) => {
+        const handleSave = async (e) => {
             if (e) e.stopPropagation();
             const name = nameInput.value.trim();
             const pass = newKeyInput.value;
@@ -687,8 +619,14 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                 return;
             }
 
-            const current = loadProfiles();
-            const created = { name, pass, color };
+            let key;
+            try {
+                key = await ensureMasterKeyUnlocked();
+            } catch {
+                return alert(i18n.t('operation_failed'));
+            }
+            const current = await loadProfiles();
+            const created = { name, color, passEnc: await encryptStringWithKey(key, pass) };
             const existingIdx = current.findIndex((p) => p && normalizeProfileName(p.name) === normalizeProfileName(name));
             if (existingIdx >= 0) current[existingIdx] = created;
             else current.push(created);
@@ -703,7 +641,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
             nameInput.value = '';
             newKeyInput.value = '';
             updateStrengthMeter(newKeyInput, newStrengthBar);
-            renderProfiles();
+            await renderProfiles();
             flashStatus('profile_saved');
         };
 
@@ -781,10 +719,10 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                 colorBtn.style.marginRight = '8px';
                 colorBtn.style.background = 'transparent';
                 colorBtn.addEventListener('click', (e) => e.stopPropagation());
-                colorBtn.addEventListener('input', (e) => {
+                colorBtn.addEventListener('input', async (e) => {
                     e.stopPropagation();
                     const nextColor = colorBtn.value;
-                    const current = loadProfiles();
+                    const current = await loadProfiles();
                     const target = current[idx];
                     if (target) target.color = nextColor;
                     saveProfiles(current);
@@ -798,17 +736,17 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                 delBtn.className = 'delete-profile';
                 delBtn.innerText = '✕';
                 delBtn.title = i18n.t('delete_profile');
-                delBtn.addEventListener('click', (e) => {
+                delBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    const current = loadProfiles();
+                    const current = await loadProfiles();
                     current.splice(idx, 1);
                     saveProfiles(current);
-                    renderProfiles();
+                    await renderProfiles();
                     flashStatus('profile_deleted');
                 });
 
-                item.addEventListener('click', () => {
-                    selectProfileInUi(p);
+                item.addEventListener('click', async () => {
+                    await selectProfileInUi(p);
                     const { payload } = parseHashWithProfile(location.hash.substring(1));
                     if (payload && !editor.value) performDecryption(payload, keyInput.value);
                     else if (editor.value) scheduleSync();
@@ -833,8 +771,14 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         }
     };
 
-    const selectProfileInUi = (p) => {
-        keyInput.value = p.pass || '';
+    const selectProfileInUi = async (p) => {
+        try {
+            const key = await ensureMasterKeyUnlocked();
+            keyInput.value = await decryptStringWithKey(key, p.passEnc);
+        } catch {
+            flashStatus('operation_failed');
+            return;
+        }
         updateStrengthMeter(keyInput, strengthBar);
         if (profileBtn) profileBtn.style.background = p.color || '';
         if (profileNameEl) {
@@ -877,21 +821,26 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
             return;
         }
 
-        const profiles = loadProfiles();
+        let profiles = [];
+        try {
+            profiles = await loadProfiles();
+        } catch {
+            profiles = [];
+        }
         const existing = profiles.find((p) => p && normalizeProfileName(p.name) === normalizeProfileName(profileName));
         if (existing) {
-            selectProfileInUi(existing);
+            await selectProfileInUi(existing);
             return;
         }
 
         const created = await requestProfileCreationViaManager(profileName);
-        if (created) selectProfileInUi(created);
+        if (created) await selectProfileInUi(created);
     };
 
     if (profileBtn) {
-        profileBtn.addEventListener('click', (e) => {
+        profileBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            renderProfiles();
+            await renderProfiles();
             profilePopover.classList.toggle('show');
             emojiPopover.classList.remove('show');
             if (langPopover) langPopover.classList.remove('show');
@@ -913,13 +862,13 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                     data = await encodePlaintextPayload(editor.value);
                 } else {
                     if (!isKeyStrongEnoughToEncrypt(keyInput.value)) return alert(i18n.t('export_key_required'));
-                    data = await encrypt({ text: editor.value, password: keyInput.value, iterations: kdfIterations });
+                    data = await encrypt({ text: editor.value, password: keyInput.value });
                 }
             } catch {
                 return alert(i18n.t('operation_failed'));
             }
             const selectedProfileName = getSelectedProfileName();
-            const payload = { data, iterations: kdfIterations, formatVersion: 1, profile: encodeProfileName(selectedProfileName) };
+            const payload = { data, formatVersion: 2, profile: encodeProfileName(selectedProfileName) };
             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -946,7 +895,19 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                         setStatus('invalid_file');
                         return;
                     }
-                    const { data, iterations, profile } = parsed || {};
+                    if (!parsed || typeof parsed !== 'object') {
+                        setStatus('invalid_file');
+                        return;
+                    }
+                    if ('iterations' in parsed) {
+                        setStatus('invalid_file');
+                        return;
+                    }
+                    const { data, profile, formatVersion } = parsed || {};
+                    if (formatVersion !== 2) {
+                        setStatus('invalid_file');
+                        return;
+                    }
                     if (typeof data !== 'string' || !data) {
                         setStatus('invalid_file');
                         return;
@@ -960,7 +921,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
                             await ensureProfileAvailable(profileName);
                         }
                     }
-                    await performDecryption(data, keyInput.value, iterations);
+                    await performDecryption(data, keyInput.value);
                 };
                 reader.readAsText(file);
             };
@@ -1013,14 +974,7 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
             history.replaceState(null, '', location.pathname);
             updateStrengthMeter();
             updateCounts();
-            scheduleMarkdownPreview();
             editor.focus();
-        });
-    }
-
-    if (mdPreviewBtn) {
-        mdPreviewBtn.addEventListener('click', () => {
-            setMarkdownPreviewEnabled(!markdownPreviewEnabled);
         });
     }
 
@@ -1102,7 +1056,12 @@ export const startUi = ({ i18n, encrypt, decrypt, kdfIterations, decodePlaintext
         };
     };
 
-    if ('serviceWorker' in navigator) {
+    const isLocalhost = () => {
+        const host = window.location.hostname;
+        return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+    };
+
+    if ('serviceWorker' in navigator && window.isSecureContext && (window.location.protocol === 'https:' || isLocalhost())) {
         navigator.serviceWorker.register('./sw.js').then((reg) => {
             reg.addEventListener('updatefound', () => {
                 const newWorker = reg.installing;
