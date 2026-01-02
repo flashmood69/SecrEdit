@@ -67,6 +67,17 @@ window.SecrEditLocales.ru = {
         "name_required": "Требуется имя",
         "key_required": "Требуется ключ",
         "profile_color": "Цвет профиля",
-        "no_secrets": "No Secrets"
+        "no_secrets": "No Secrets",
+        "unlock_profiles": "Разблокировать профили",
+        "profiles_unlocked": "Профили разблокированы",
+        "profiles_locked": "Профили заблокированы",
+        "master_password": "Мастер-пароль...",
+        "unlock": "Разблокировать",
+        "lock_profiles": "Заблокировать",
+        "set_master_password": "Установить мастер-пароль",
+        "set_password": "Установить пароль",
+        "master_password_required": "Требуется мастер-пароль",
+        "wrong_master_password": "Неверный мастер-пароль",
+        "master_password_set": "Мастер-пароль установлен"
     }
 };

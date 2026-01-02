@@ -67,6 +67,17 @@ window.SecrEditLocales.zh = {
         "name_required": "需要名称",
         "key_required": "需要密钥",
         "profile_color": "配置颜色",
-        "no_secrets": "没有秘密"
+        "no_secrets": "没有秘密",
+        "unlock_profiles": "解锁配置",
+        "profiles_unlocked": "配置已解锁",
+        "profiles_locked": "配置已锁定",
+        "master_password": "主密码...",
+        "unlock": "解锁",
+        "lock_profiles": "锁定",
+        "set_master_password": "设置主密码",
+        "set_password": "设置密码",
+        "master_password_required": "需要主密码",
+        "wrong_master_password": "主密码错误",
+        "master_password_set": "主密码已设置"
     }
 };

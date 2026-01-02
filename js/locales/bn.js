@@ -67,6 +67,17 @@ window.SecrEditLocales.bn = {
         "name_required": "নাম প্রয়োজন",
         "key_required": "কী (key) প্রয়োজন",
         "profile_color": "প্রোফাইলের রঙ",
-        "no_secrets": "কোনো গোপনীয়তা নেই"
+        "no_secrets": "কোনো গোপনীয়তা নেই",
+        "unlock_profiles": "প্রোফাইল আনলক করুন",
+        "profiles_unlocked": "প্রোফাইল আনলক করা হয়েছে",
+        "profiles_locked": "প্রোফাইল লক করা হয়েছে",
+        "master_password": "মাস্টার পাসওয়ার্ড...",
+        "unlock": "আনলক",
+        "lock_profiles": "লক",
+        "set_master_password": "মাস্টার পাসওয়ার্ড সেট করুন",
+        "set_password": "পাসওয়ার্ড সেট করুন",
+        "master_password_required": "মাস্টার পাসওয়ার্ড প্রয়োজন",
+        "wrong_master_password": "ভুল মাস্টার পাসওয়ার্ড",
+        "master_password_set": "মাস্টার পাসওয়ার্ড সেট করা হয়েছে"
     }
 };

@@ -67,6 +67,17 @@ window.SecrEditLocales.es = {
         "name_required": "Nombre requerido",
         "key_required": "Clave requerida",
         "profile_color": "Color del perfil",
-        "no_secrets": "Sin Secretos"
+        "no_secrets": "Sin Secretos",
+        "unlock_profiles": "Desbloquear perfiles",
+        "profiles_unlocked": "Perfiles desbloqueados",
+        "profiles_locked": "Perfiles bloqueados",
+        "master_password": "Contraseña maestra...",
+        "unlock": "Desbloquear",
+        "lock_profiles": "Bloquear",
+        "set_master_password": "Establecer contraseña maestra",
+        "set_password": "Establecer contraseña",
+        "master_password_required": "Contraseña maestra requerida",
+        "wrong_master_password": "Contraseña maestra incorrecta",
+        "master_password_set": "Contraseña maestra establecida"
     }
 };

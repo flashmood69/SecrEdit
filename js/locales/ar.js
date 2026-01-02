@@ -67,6 +67,17 @@ window.SecrEditLocales.ar = {
         "name_required": "الاسم مطلوب",
         "key_required": "المفتاح مطلوب",
         "profile_color": "لون الملف التعريفي",
-        "no_secrets": "بدون أسرار"
+        "no_secrets": "بدون أسرار",
+        "unlock_profiles": "فك قفل ملفات التعريف",
+        "profiles_unlocked": "تم فك قفل ملفات التعريف",
+        "profiles_locked": "ملفات التعريف مقفلة",
+        "master_password": "كلمة المرور الرئيسية...",
+        "unlock": "فك القفل",
+        "lock_profiles": "قفل",
+        "set_master_password": "تعيين كلمة المرور الرئيسية",
+        "set_password": "تعيين كلمة المرور",
+        "master_password_required": "كلمة المرور الرئيسية مطلوبة",
+        "wrong_master_password": "كلمة مرور رئيسية خاطئة",
+        "master_password_set": "تم تعيين كلمة المرور الرئيسية"
     }
 };

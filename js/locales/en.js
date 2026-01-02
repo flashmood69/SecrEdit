@@ -67,6 +67,17 @@ window.SecrEditLocales.en = {
         "name_required": "Name required",
         "key_required": "Key required",
         "profile_color": "Profile Color",
-        "no_secrets": "No Secrets"
+        "no_secrets": "No Secrets",
+        "unlock_profiles": "Unlock Profiles",
+        "profiles_unlocked": "Profiles unlocked",
+        "profiles_locked": "Profiles locked",
+        "master_password": "Master password...",
+        "unlock": "Unlock",
+        "lock_profiles": "Lock",
+        "set_master_password": "Set Master Password",
+        "set_password": "Set Password",
+        "master_password_required": "Master password required",
+        "wrong_master_password": "Wrong master password",
+        "master_password_set": "Master password set"
     }
 };

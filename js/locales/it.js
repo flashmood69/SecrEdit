@@ -67,6 +67,17 @@ window.SecrEditLocales.it = {
         "name_required": "Nome richiesto",
         "key_required": "Chiave richiesta",
         "profile_color": "Colore del profilo",
-        "no_secrets": "Senza Segreti"
+        "no_secrets": "Senza Segreti",
+        "unlock_profiles": "Sblocca Profili",
+        "profiles_unlocked": "Profili sbloccati",
+        "profiles_locked": "Profili bloccati",
+        "master_password": "Master password...",
+        "unlock": "Sblocca",
+        "lock_profiles": "Blocca",
+        "set_master_password": "Imposta Master Password",
+        "set_password": "Imposta Password",
+        "master_password_required": "Master password richiesta",
+        "wrong_master_password": "Master password errata",
+        "master_password_set": "Master password impostata"
     }
 };

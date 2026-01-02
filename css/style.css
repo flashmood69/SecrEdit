@@ -102,20 +102,54 @@ input#key-input:focus {
     border-bottom: 1px solid var(--border);
     background: rgba(0,0,0,0.05);
 }
+#unlock-profiles-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.05);
+}
+#unlock-profiles-container input {
+    width: 100%;
+    box-sizing: border-box;
+}
+.unlock-profiles-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.unlock-profiles-title {
+    font-size: 12px;
+    color: var(--text);
+}
+.unlock-profiles-btn {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: white;
+}
+.unlock-profiles-lock-btn {
+    min-width: 60px;
+    height: 28px;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
 #save-profile-container input {
     width: 100%;
     box-sizing: border-box;
 }
 #save-profile-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
+    width: 100%;
+    padding: 8px;
     border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
-#save-profile-btn:hover {
-    filter: brightness(1.1);
+    background: var(--accent);
+    color: white;
 }
 #emoji-popover.show, #lang-popover.show { display: grid; }
 #profile-popover.show { display: flex; }
@@ -171,7 +205,28 @@ input#key-input:focus {
     box-sizing: border-box;
     width: 100%;
 }
+#unlock-profiles-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 5px;
+    box-sizing: border-box;
+    width: 100%;
+}
 #save-profile-container input:not([type="color"]) {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+}
+#unlock-profiles-container input:not([type="color"]) {
     flex: 1;
     min-width: 0;
     padding: 8px 10px;
@@ -191,6 +246,11 @@ input#key-input:focus {
     padding: 0;
 }
 #save-profile-btn {
+    min-width: 30px;
+    height: 30px;
+    font-size: 14px;
+}
+.unlock-profiles-btn {
     min-width: 30px;
     height: 30px;
     font-size: 14px;

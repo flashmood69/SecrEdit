@@ -331,7 +331,10 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const raw = location.hash.substring(1);
         if (raw) {
             const { payload, profileName } = parseHashWithProfile(raw);
-            if (profileName) await ensureProfileAvailable(profileName);
+            if (profileName) {
+                const ok = await ensureProfileAvailable(profileName);
+                if (!ok) return;
+            }
             await performDecryption(payload, keyInput.value);
             return;
         }
@@ -378,6 +381,22 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
     let profilesMasterKey = null;
 
+    const createPasswordManagerUsernameInput = () => {
+        const u = document.createElement('input');
+        u.type = 'text';
+        u.value = 'SecrEdit';
+        u.setAttribute('autocomplete', 'username');
+        u.setAttribute('name', 'username');
+        u.style.position = 'absolute';
+        u.style.left = '-9999px';
+        u.style.width = '1px';
+        u.style.height = '1px';
+        u.style.opacity = '0';
+        u.setAttribute('tabindex', '-1');
+        u.setAttribute('aria-hidden', 'true');
+        return u;
+    };
+
     const deriveProfilesMasterKey = async (masterPassword, salt) => {
         const material = await crypto.subtle.importKey('raw', utf8Encode(masterPassword), 'PBKDF2', false, ['deriveKey']);
         return crypto.subtle.deriveKey(
@@ -403,6 +422,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         return utf8Decode(new Uint8Array(plaintext));
     };
 
+    const hasProfilesMasterPassword = () => Boolean(localStorage.getItem(ENCRYPTED_PROFILES_CHECK_KEY));
+
     const loadProfilesSalt = () => {
         const raw = localStorage.getItem(ENCRYPTED_PROFILES_SALT_KEY);
         if (!raw) return null;
@@ -422,43 +443,47 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         return salt;
     };
 
-    const getMasterPasswordForCreate = () => {
-        const pw1 = window.prompt('Create a master password to protect saved profiles');
-        if (!pw1) return null;
-        const pw2 = window.prompt('Confirm master password');
-        if (!pw2 || pw1 !== pw2) return null;
-        return pw1;
-    };
-
-    const getMasterPasswordForUnlock = () => window.prompt('Enter master password to unlock saved profiles');
-
-    const ensureMasterKeyUnlocked = async () => {
+    const unlockProfilesMasterKey = async (masterPassword) => {
         if (profilesMasterKey) return profilesMasterKey;
+        if (!hasProfilesMasterPassword()) throw new Error('No master password set');
+        if (!masterPassword) throw new Error('Missing master password');
 
-        const salt = loadProfilesSalt();
-        const hasCheck = Boolean(localStorage.getItem(ENCRYPTED_PROFILES_CHECK_KEY));
-        const masterPassword = hasCheck ? getMasterPasswordForUnlock() : getMasterPasswordForCreate();
-        if (!masterPassword) throw new Error('Operation failed');
-
-        const actualSalt = salt || getOrCreateProfilesSalt();
+        const actualSalt = loadProfilesSalt() || getOrCreateProfilesSalt();
         const key = await deriveProfilesMasterKey(masterPassword, actualSalt);
 
         const checkRaw = localStorage.getItem(ENCRYPTED_PROFILES_CHECK_KEY);
-        if (checkRaw) {
-            let check;
-            try {
-                check = JSON.parse(checkRaw);
-            } catch {
-                throw new Error('Operation failed');
-            }
-            await decryptStringWithKey(key, check);
-        } else {
-            const check = await encryptStringWithKey(key, 'ok');
-            localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(check));
+        if (!checkRaw) throw new Error('Operation failed');
+        let check;
+        try {
+            check = JSON.parse(checkRaw);
+        } catch {
+            throw new Error('Operation failed');
         }
-
+        try {
+            await decryptStringWithKey(key, check);
+        } catch {
+            throw new Error('Wrong master password');
+        }
         profilesMasterKey = key;
         return key;
+    };
+
+    const createProfilesMasterKey = async (masterPassword) => {
+        if (profilesMasterKey) return profilesMasterKey;
+        if (hasProfilesMasterPassword()) throw new Error('Master password already set');
+        if (!masterPassword) throw new Error('Missing master password');
+        if (!isKeyStrongEnoughToEncrypt(masterPassword)) throw new Error('Weak');
+
+        const salt = getOrCreateProfilesSalt();
+        const key = await deriveProfilesMasterKey(masterPassword, salt);
+        const check = await encryptStringWithKey(key, 'ok');
+        localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(check));
+        profilesMasterKey = key;
+        return key;
+    };
+
+    const lockProfilesMasterKey = () => {
+        profilesMasterKey = null;
     };
 
     const loadEncryptedProfiles = () => {
@@ -505,6 +530,225 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }
         profilePopover.innerHTML = '';
 
+        let masterFocusEl = null;
+        const isRtl = document.documentElement.dir === 'rtl';
+
+        const unlockContainer = document.createElement('div');
+        unlockContainer.id = 'unlock-profiles-container';
+
+        const unlockHeader = document.createElement('div');
+        unlockHeader.className = 'unlock-profiles-header';
+
+        const unlockTitle = document.createElement('div');
+        unlockTitle.className = 'unlock-profiles-title';
+
+        const lockBtn = document.createElement('button');
+        lockBtn.type = 'button';
+        lockBtn.className = 'unlock-profiles-lock-btn';
+        lockBtn.innerText = i18n.t('lock_profiles');
+        lockBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            lockProfilesMasterKey();
+            await renderProfiles({ ...opts, focusUnlock: true });
+            flashStatus('profiles_locked');
+        });
+
+        unlockHeader.appendChild(unlockTitle);
+
+        if (profilesMasterKey) {
+            unlockTitle.innerText = i18n.t('profiles_unlocked');
+            unlockHeader.appendChild(lockBtn);
+            unlockContainer.appendChild(unlockHeader);
+        } else if (hasProfilesMasterPassword()) {
+            unlockTitle.innerText = i18n.t('unlock_profiles');
+            unlockContainer.appendChild(unlockHeader);
+
+            const unlockForm = document.createElement('form');
+            unlockForm.autocomplete = 'on';
+            unlockForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleUnlock();
+            });
+
+            const mpWrapper = document.createElement('div');
+            mpWrapper.className = 'input-wrapper';
+            mpWrapper.style.width = '100%';
+            mpWrapper.style.margin = '0';
+
+            const mpInput = document.createElement('input');
+            mpInput.type = 'password';
+            mpInput.placeholder = i18n.t('master_password');
+            mpInput.setAttribute('autocomplete', 'current-password');
+            mpInput.setAttribute('name', 'password');
+            mpInput.setAttribute('autocapitalize', 'none');
+            mpInput.setAttribute('spellcheck', 'false');
+            mpInput.addEventListener('click', (e) => e.stopPropagation());
+            if (isRtl) mpInput.style.paddingLeft = '35px';
+            else mpInput.style.paddingRight = '35px';
+
+            const mpStrengthMeter = document.createElement('div');
+            mpStrengthMeter.className = 'strength-meter';
+            const mpStrengthBar = document.createElement('div');
+            mpStrengthBar.className = 'strength-bar';
+            mpStrengthMeter.appendChild(mpStrengthBar);
+
+            mpInput.addEventListener('input', () => {
+                updateStrengthMeter(mpInput, mpStrengthBar);
+            });
+
+            const mpToggle = document.createElement('button');
+            mpToggle.type = 'button';
+            mpToggle.innerText = '👁️';
+            mpToggle.style.position = 'absolute';
+            if (isRtl) mpToggle.style.left = '5px';
+            else mpToggle.style.right = '5px';
+            mpToggle.style.top = '50%';
+            mpToggle.style.transform = 'translateY(-50%)';
+            mpToggle.style.background = 'none';
+            mpToggle.style.border = 'none';
+            mpToggle.style.cursor = 'pointer';
+            mpToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const show = mpInput.type === 'password';
+                mpInput.type = show ? 'text' : 'password';
+                mpToggle.innerText = show ? '🙈' : '👁️';
+            });
+
+            const unlockBtn = document.createElement('button');
+            unlockBtn.type = 'button';
+            unlockBtn.className = 'unlock-profiles-btn';
+            unlockBtn.innerText = i18n.t('unlock');
+
+            const handleUnlock = async (e) => {
+                if (e) e.stopPropagation();
+                try {
+                    await unlockProfilesMasterKey(mpInput.value);
+                } catch (err) {
+                    flashStatus(err && err.message === 'Wrong master password' ? 'wrong_master_password' : 'operation_failed');
+                    mpInput.focus();
+                    return;
+                }
+                mpInput.value = '';
+                await renderProfiles({ ...opts, prefillName: nameInput.value, prefillPass: newKeyInput.value, prefillColor: colorInput.value });
+                flashStatus('profiles_unlocked');
+            };
+
+            unlockBtn.addEventListener('click', handleUnlock);
+            mpInput.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                handleUnlock();
+            });
+
+            mpWrapper.appendChild(mpInput);
+            mpWrapper.appendChild(mpStrengthMeter);
+            mpWrapper.appendChild(mpToggle);
+            unlockForm.appendChild(createPasswordManagerUsernameInput());
+            unlockForm.appendChild(mpWrapper);
+            unlockForm.appendChild(unlockBtn);
+            unlockContainer.appendChild(unlockForm);
+            masterFocusEl = mpInput;
+        } else {
+            unlockTitle.innerText = i18n.t('set_master_password');
+            unlockContainer.appendChild(unlockHeader);
+
+            const setForm = document.createElement('form');
+            setForm.autocomplete = 'on';
+            setForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSet();
+            });
+
+            const mpWrapper = document.createElement('div');
+            mpWrapper.className = 'input-wrapper';
+            mpWrapper.style.width = '100%';
+            mpWrapper.style.margin = '0';
+
+            const mpInput = document.createElement('input');
+            mpInput.type = 'password';
+            mpInput.placeholder = i18n.t('master_password');
+            mpInput.setAttribute('autocomplete', 'new-password');
+            mpInput.setAttribute('name', 'new-password');
+            mpInput.setAttribute('autocapitalize', 'none');
+            mpInput.setAttribute('spellcheck', 'false');
+            mpInput.addEventListener('click', (e) => e.stopPropagation());
+            if (isRtl) mpInput.style.paddingLeft = '35px';
+            else mpInput.style.paddingRight = '35px';
+
+            const mpStrengthMeter = document.createElement('div');
+            mpStrengthMeter.className = 'strength-meter';
+            const mpStrengthBar = document.createElement('div');
+            mpStrengthBar.className = 'strength-bar';
+            mpStrengthMeter.appendChild(mpStrengthBar);
+
+            mpInput.addEventListener('input', () => {
+                updateStrengthMeter(mpInput, mpStrengthBar);
+            });
+
+            const mpToggle = document.createElement('button');
+            mpToggle.type = 'button';
+            mpToggle.innerText = '👁️';
+            mpToggle.style.position = 'absolute';
+            if (isRtl) mpToggle.style.left = '5px';
+            else mpToggle.style.right = '5px';
+            mpToggle.style.top = '50%';
+            mpToggle.style.transform = 'translateY(-50%)';
+            mpToggle.style.background = 'none';
+            mpToggle.style.border = 'none';
+            mpToggle.style.cursor = 'pointer';
+            mpToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const show = mpInput.type === 'password';
+                mpInput.type = show ? 'text' : 'password';
+                mpToggle.innerText = show ? '🙈' : '👁️';
+            });
+
+            const setBtn = document.createElement('button');
+            setBtn.type = 'button';
+            setBtn.className = 'unlock-profiles-btn';
+            setBtn.innerText = i18n.t('set_password');
+
+            const handleSet = async (e) => {
+                if (e) e.stopPropagation();
+                if (!isKeyStrongEnoughToEncrypt(mpInput.value)) {
+                    flashStatus('weak_key');
+                    mpInput.focus();
+                    return;
+                }
+                try {
+                    await createProfilesMasterKey(mpInput.value);
+                } catch {
+                    flashStatus('operation_failed');
+                    mpInput.focus();
+                    return;
+                }
+                mpInput.value = '';
+                await renderProfiles({ ...opts, prefillName: nameInput.value, prefillPass: newKeyInput.value, prefillColor: colorInput.value });
+                flashStatus('master_password_set');
+            };
+
+            setBtn.addEventListener('click', handleSet);
+            mpInput.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                handleSet();
+            });
+
+            mpWrapper.appendChild(mpInput);
+            mpWrapper.appendChild(mpStrengthMeter);
+            mpWrapper.appendChild(mpToggle);
+
+            setForm.appendChild(createPasswordManagerUsernameInput());
+            setForm.appendChild(mpWrapper);
+            setForm.appendChild(setBtn);
+            unlockContainer.appendChild(setForm);
+            masterFocusEl = mpInput;
+        }
+
+        profilePopover.appendChild(unlockContainer);
+
         const saveContainer = document.createElement('div');
         saveContainer.id = 'save-profile-container';
         saveContainer.style.flexDirection = 'column';
@@ -514,6 +758,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.placeholder = i18n.t('profile_name');
+        nameInput.setAttribute('autocomplete', 'off');
+        nameInput.setAttribute('name', 'profile_name');
         nameInput.addEventListener('click', (e) => e.stopPropagation());
         if (opts.prefillName) nameInput.value = opts.prefillName;
 
@@ -525,9 +771,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const newKeyInput = document.createElement('input');
         newKeyInput.type = 'password';
         newKeyInput.placeholder = i18n.t('key_placeholder');
+        newKeyInput.setAttribute('autocomplete', 'off');
+        newKeyInput.setAttribute('name', 'profile_key');
         newKeyInput.style.width = '100%';
         newKeyInput.addEventListener('click', (e) => e.stopPropagation());
-        const isRtl = document.documentElement.dir === 'rtl';
+        if (typeof opts.prefillPass === 'string') newKeyInput.value = opts.prefillPass;
         if (isRtl) newKeyInput.style.paddingLeft = '35px';
         else newKeyInput.style.paddingRight = '35px';
 
@@ -577,7 +825,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const colorInput = document.createElement('input');
         colorInput.type = 'color';
-        colorInput.value = '#6c5ce7';
+        colorInput.value = typeof opts.prefillColor === 'string' && opts.prefillColor ? opts.prefillColor : '#6c5ce7';
         colorInput.style.width = '40px';
         colorInput.style.height = '40px';
         colorInput.style.border = '1px solid var(--border)';
@@ -592,6 +840,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const saveBtn = document.createElement('button');
         saveBtn.id = 'save-profile-btn';
+        saveBtn.className = 'unlock-profiles-btn';
         saveBtn.innerText = i18n.t('save_profile');
         saveBtn.type = 'button';
         saveBtn.style.width = '100%';
@@ -619,14 +868,13 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 return;
             }
 
-            let key;
-            try {
-                key = await ensureMasterKeyUnlocked();
-            } catch {
-                return alert(i18n.t('operation_failed'));
+            if (!profilesMasterKey) {
+                flashStatus(hasProfilesMasterPassword() ? 'profiles_locked' : 'master_password_required');
+                if (masterFocusEl) masterFocusEl.focus();
+                return;
             }
             const current = await loadProfiles();
-            const created = { name, color, passEnc: await encryptStringWithKey(key, pass) };
+            const created = { name, color, passEnc: await encryptStringWithKey(profilesMasterKey, pass) };
             const existingIdx = current.findIndex((p) => p && normalizeProfileName(p.name) === normalizeProfileName(name));
             if (existingIdx >= 0) current[existingIdx] = created;
             else current.push(created);
@@ -664,7 +912,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         saveContainer.appendChild(colorWrapper);
         saveContainer.appendChild(saveBtn);
         profilePopover.appendChild(saveContainer);
-        if (opts.focusPassword) setTimeout(() => newKeyInput.focus(), 0);
+        if (opts.focusUnlock && masterFocusEl) setTimeout(() => masterFocusEl.focus(), 0);
+        else if (opts.focusPassword) setTimeout(() => newKeyInput.focus(), 0);
 
         // Default "No Secrets" profile
         const defaultProfile = { name: i18n.t('no_secrets'), pass: '' };
@@ -746,6 +995,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 });
 
                 item.addEventListener('click', async () => {
+                    if (!profilesMasterKey) {
+                        flashStatus(hasProfilesMasterPassword() ? 'profiles_locked' : 'master_password_required');
+                        if (masterFocusEl) masterFocusEl.focus();
+                        return;
+                    }
                     await selectProfileInUi(p);
                     const { payload } = parseHashWithProfile(location.hash.substring(1));
                     if (payload && !editor.value) performDecryption(payload, keyInput.value);
@@ -772,12 +1026,19 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     };
 
     const selectProfileInUi = async (p) => {
+        if (!profilesMasterKey) {
+            await renderProfiles({ focusUnlock: true });
+            profilePopover.classList.add('show');
+            emojiPopover.classList.remove('show');
+            if (langPopover) langPopover.classList.remove('show');
+            flashStatus(hasProfilesMasterPassword() ? 'profiles_locked' : 'master_password_required');
+            return false;
+        }
         try {
-            const key = await ensureMasterKeyUnlocked();
-            keyInput.value = await decryptStringWithKey(key, p.passEnc);
+            keyInput.value = await decryptStringWithKey(profilesMasterKey, p.passEnc);
         } catch {
             flashStatus('operation_failed');
-            return;
+            return false;
         }
         updateStrengthMeter(keyInput, strengthBar);
         if (profileBtn) profileBtn.style.background = p.color || '';
@@ -785,6 +1046,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             profileNameEl.removeAttribute('data-i18n');
             profileNameEl.innerText = p.name;
         }
+        return true;
     };
 
     const requestProfileCreationViaManager = (profileName) => {
@@ -818,7 +1080,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const ensureProfileAvailable = async (profileName) => {
         if (profileName === NO_SECRETS_PROFILE) {
             selectNoSecretsInUi();
-            return;
+            return true;
         }
 
         let profiles = [];
@@ -829,12 +1091,12 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }
         const existing = profiles.find((p) => p && normalizeProfileName(p.name) === normalizeProfileName(profileName));
         if (existing) {
-            await selectProfileInUi(existing);
-            return;
+            return await selectProfileInUi(existing);
         }
 
         const created = await requestProfileCreationViaManager(profileName);
-        if (created) await selectProfileInUi(created);
+        if (!created) return false;
+        return await selectProfileInUi(created);
     };
 
     if (profileBtn) {
@@ -918,7 +1180,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                             profileName = decodeProfileName(profile);
                         } catch {}
                         if (profileName) {
-                            await ensureProfileAvailable(profileName);
+                            const ok = await ensureProfileAvailable(profileName);
+                            if (!ok) return;
                         }
                     }
                     await performDecryption(data, keyInput.value);

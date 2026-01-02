@@ -67,6 +67,17 @@ window.SecrEditLocales.de = {
         "name_required": "Name erforderlich",
         "key_required": "Schlüssel erforderlich",
         "profile_color": "Profilfarbe",
-        "no_secrets": "Keine Geheimnisse"
+        "no_secrets": "Keine Geheimnisse",
+        "unlock_profiles": "Profile entsperren",
+        "profiles_unlocked": "Profile entsperrt",
+        "profiles_locked": "Profile gesperrt",
+        "master_password": "Master-Passwort...",
+        "unlock": "Entsperren",
+        "lock_profiles": "Sperren",
+        "set_master_password": "Master-Passwort festlegen",
+        "set_password": "Passwort festlegen",
+        "master_password_required": "Master-Passwort erforderlich",
+        "wrong_master_password": "Falsches Master-Passwort",
+        "master_password_set": "Master-Passwort festgelegt"
     }
 };
