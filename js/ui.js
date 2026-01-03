@@ -2,6 +2,21 @@ import { PLAINTEXT_PREFIX, b64UrlDecodeToBytes, b64UrlEncodeBytes, gzipBytes, ut
 
 const $ = (id) => document.getElementById(id);
 
+const createSvgIcon = (d) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '24');
+    svg.setAttribute('height', '24');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('fill', 'currentColor');
+    path.setAttribute('d', d);
+    return svg;
+};
+
+const ICON_VISIBLE = () => createSvgIcon("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z");
+const ICON_HIDDEN = () => createSvgIcon("M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4.01.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z");
+const ICON_CHECK = () => createSvgIcon("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z");
+
 export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => {
     const header = $('header');
     const burgerBtn = $('burger-btn');
@@ -279,7 +294,17 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     if (burgerBtn && header) {
         burgerBtn.addEventListener('click', () => {
             header.classList.toggle('collapsed');
-            burgerBtn.innerText = header.classList.contains('collapsed') ? '☰' : '✕';
+            const iconMenu = burgerBtn.querySelector('.icon-menu');
+            const iconClose = burgerBtn.querySelector('.icon-close');
+            if (iconMenu && iconClose) {
+                if (header.classList.contains('collapsed')) {
+                    iconMenu.classList.remove('hidden');
+                    iconClose.classList.add('hidden');
+                } else {
+                    iconMenu.classList.add('hidden');
+                    iconClose.classList.remove('hidden');
+                }
+            }
         });
     }
 
@@ -290,7 +315,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         if (langBtn && langPopover) {
             const updateLangBtn = (lang) => {
-                langBtn.innerHTML = `<img src="assets/flags/${lang}.svg" alt="${lang}" class="flag-icon">`;
+                const img = document.createElement('img');
+                img.src = `assets/flags/${lang}.svg`;
+                img.alt = lang;
+                img.className = 'flag-icon';
+                langBtn.replaceChildren(img);
             };
             updateLangBtn(i18n.currentLang);
 
@@ -299,7 +328,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'lang-item';
-                btn.innerHTML = `<img src="assets/flags/${lang}.svg" alt="${lang}" class="flag-icon">`;
+                const img = document.createElement('img');
+                img.src = `assets/flags/${lang}.svg`;
+                img.alt = lang;
+                img.className = 'flag-icon';
+                btn.appendChild(img);
                 btn.title = lang.toUpperCase();
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -494,7 +527,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 .filter((p) => p && typeof p === 'object' && typeof p.name === 'string' && p.name)
                 .map((p) => ({
                     name: p.name,
-                    color: typeof p.color === 'string' && p.color ? p.color : '#6c5ce7',
+                    color: typeof p.color === 'string' && p.color ? p.color : '#2ed573',
                     passEnc: p.passEnc
                 }));
         } catch {
@@ -507,7 +540,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             .filter((p) => p && typeof p === 'object' && typeof p.name === 'string' && p.name)
             .map((p) => ({
                 name: p.name,
-                color: typeof p.color === 'string' && p.color ? p.color : '#6c5ce7',
+                color: typeof p.color === 'string' && p.color ? p.color : '#2ed573',
                 passEnc: p.passEnc
             })) : [];
         localStorage.setItem(ENCRYPTED_PROFILES_KEY, JSON.stringify(sanitized));
@@ -528,7 +561,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         } catch {
             profiles = [];
         }
-        profilePopover.innerHTML = '';
+        profilePopover.replaceChildren();
 
         let masterFocusEl = null;
         const isRtl = document.documentElement.dir === 'rtl';
@@ -599,7 +632,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
             const mpToggle = document.createElement('button');
             mpToggle.type = 'button';
-            mpToggle.innerText = '👁️';
+            mpToggle.appendChild(ICON_VISIBLE());
             mpToggle.style.position = 'absolute';
             if (isRtl) mpToggle.style.left = '5px';
             else mpToggle.style.right = '5px';
@@ -608,11 +641,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             mpToggle.style.background = 'none';
             mpToggle.style.border = 'none';
             mpToggle.style.cursor = 'pointer';
+            mpToggle.style.display = 'flex';
+            mpToggle.style.alignItems = 'center';
+            mpToggle.style.justifyContent = 'center';
+            mpToggle.style.padding = '0';
             mpToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const show = mpInput.type === 'password';
                 mpInput.type = show ? 'text' : 'password';
-                mpToggle.innerText = show ? '🙈' : '👁️';
+                mpToggle.replaceChildren(show ? ICON_HIDDEN() : ICON_VISIBLE());
             });
 
             const unlockBtn = document.createElement('button');
@@ -689,7 +726,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
             const mpToggle = document.createElement('button');
             mpToggle.type = 'button';
-            mpToggle.innerText = '👁️';
+            mpToggle.appendChild(ICON_VISIBLE());
             mpToggle.style.position = 'absolute';
             if (isRtl) mpToggle.style.left = '5px';
             else mpToggle.style.right = '5px';
@@ -698,11 +735,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             mpToggle.style.background = 'none';
             mpToggle.style.border = 'none';
             mpToggle.style.cursor = 'pointer';
+            mpToggle.style.display = 'flex';
+            mpToggle.style.alignItems = 'center';
+            mpToggle.style.justifyContent = 'center';
+            mpToggle.style.padding = '0';
             mpToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const show = mpInput.type === 'password';
                 mpInput.type = show ? 'text' : 'password';
-                mpToggle.innerText = show ? '🙈' : '👁️';
+                mpToggle.replaceChildren(show ? ICON_HIDDEN() : ICON_VISIBLE());
             });
 
             const setBtn = document.createElement('button');
@@ -791,7 +832,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const toggleBtn = document.createElement('button');
         toggleBtn.type = 'button';
-        toggleBtn.innerText = '👁️';
+        toggleBtn.appendChild(ICON_VISIBLE());
         toggleBtn.style.position = 'absolute';
         if (isRtl) toggleBtn.style.left = '5px';
         else toggleBtn.style.right = '5px';
@@ -800,11 +841,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         toggleBtn.style.background = 'none';
         toggleBtn.style.border = 'none';
         toggleBtn.style.cursor = 'pointer';
+        toggleBtn.style.display = 'flex';
+        toggleBtn.style.alignItems = 'center';
+        toggleBtn.style.justifyContent = 'center';
+        toggleBtn.style.padding = '0';
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const show = newKeyInput.type === 'password';
             newKeyInput.type = show ? 'text' : 'password';
-            toggleBtn.innerText = show ? '🙈' : '👁️';
+            toggleBtn.replaceChildren(show ? ICON_HIDDEN() : ICON_VISIBLE());
         });
 
         keyWrapper.appendChild(newKeyInput);
@@ -825,7 +870,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const colorInput = document.createElement('input');
         colorInput.type = 'color';
-        colorInput.value = typeof opts.prefillColor === 'string' && opts.prefillColor ? opts.prefillColor : '#6c5ce7';
+        colorInput.value = typeof opts.prefillColor === 'string' && opts.prefillColor ? opts.prefillColor : '#2ed573';
         colorInput.style.width = '40px';
         colorInput.style.height = '40px';
         colorInput.style.border = '1px solid var(--border)';
@@ -957,7 +1002,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
                 const colorBtn = document.createElement('input');
                 colorBtn.type = 'color';
-                colorBtn.value = p.color || '#6c5ce7';
+                colorBtn.value = p.color || '#2ed573';
                 colorBtn.title = i18n.t('profile_color') || 'Profile Color';
                 colorBtn.style.width = '28px';
                 colorBtn.style.height = '28px';
@@ -1205,14 +1250,31 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
     const copyWithFeedback = async (btn, text) => {
         if (!text) return;
+        let success = false;
         try {
             await navigator.clipboard.writeText(text);
+            success = true;
         } catch {
-            return;
+            // Fallback for older devices/browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+            document.body.removeChild(textArea);
         }
-        const old = btn.innerText;
-        btn.innerText = '✅';
-        setTimeout(() => (btn.innerText = old), 2000);
+
+        if (success) {
+            const oldChildren = Array.from(btn.childNodes);
+            btn.replaceChildren(ICON_CHECK());
+            setTimeout(() => btn.replaceChildren(...oldChildren), 2000);
+        }
     };
 
     if (copyTextBtn) {
