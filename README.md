@@ -10,7 +10,9 @@ SecrEdit is a privacy-focused, client-side text editor that stores everything in
 - **URL-Based Storage**: The content is stored entirely in the URL fragment (hash), making it easy to bookmark or share.
 - **Compression**: Uses Gzip compression to maximize the amount of text you can store in a URL.
 - **Progressive Web App (PWA)**: Installable on mobile and desktop for offline use.
+- **Multilingual Support**: Available in 11 languages including English, Spanish, Arabic, Italian, French, German, Chinese, Hindi, Portuguese, Russian, and Bengali.
 - **Key Profiles**: Save multiple key profiles (with colors) and quickly switch between them.
+- **Master Password**: Secure your saved profiles with a master password for extra privacy.
 - **Plaintext Mode**: Use the built-in "No Secrets" profile to store plaintext (still compressed) in the URL.
 - **File Support**: Export and import notes as `.secredit` files (encrypted or plaintext depending on profile).
 - **Find & Replace**: Integrated search and replace functionality.
@@ -24,6 +26,7 @@ SecrEdit uses industry-standard cryptographic primitives provided by the Web Cry
 
 - **Algorithm**: AES-GCM (256-bit) for authenticated encryption.
 - **Key Derivation**: PBKDF2 with SHA-256 and 600,000 iterations to derive the encryption key from your password.
+- **Profile Protection**: If a master password is set, your saved profile keys are encrypted using AES-GCM before being stored in local storage.
 - **Privacy**: No tracking, no cookies, and no server-side backend. Your data is yours.
 - **DoS Protection**: Import file size limits (5MB) and decompression limits (10MB) to prevent memory exhaustion attacks.
 - **Security Headers**: Includes configuration for strict Content Security Policy (CSP), HSTS, and other security headers for production deployments.
@@ -67,6 +70,7 @@ A modern web browser that supports the Web Crypto API and Compression Stream API
 ## 🔑 Profiles
 
 - The profile name is stored in the URL fragment, so opening a link can automatically select the right profile.
+- **Security**: You can set a Master Password to encrypt all your saved profiles. This ensures that even if someone has access to your browser's local storage, they cannot see your secret keys without the master password.
 - The built-in "No Secrets" profile always stores plaintext (compressed) and requires no password.
 - Profile colors can be changed from the profile manager list.
 - Duplicate profile names are prevented (saving an existing name updates it instead of creating another entry).
