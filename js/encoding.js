@@ -19,9 +19,33 @@ export const gzipBytes = async (bytes) => {
     return new Uint8Array(await new Response(stream).arrayBuffer());
 };
 
+const MAX_DECOMPRESSED_SIZE = 10 * 1024 * 1024; // 10MB limit
+
 export const gunzipToText = async (bytes) => {
     const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    return utf8Decode(new Uint8Array(await new Response(stream).arrayBuffer()));
+    const reader = stream.getReader();
+    let total = 0;
+    const chunks = [];
+    
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > MAX_DECOMPRESSED_SIZE) {
+            await reader.cancel();
+            throw new Error('Decompression limit exceeded');
+        }
+        chunks.push(value);
+    }
+    
+    const result = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    
+    return utf8Decode(result);
 };
 
 export const decodePlaintextFromHash = async (payload) => gunzipToText(b64UrlDecodeToBytes(payload));

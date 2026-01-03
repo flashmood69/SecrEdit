@@ -78,6 +78,8 @@ window.SecrEditLocales.zh = {
         "set_password": "设置密码",
         "master_password_required": "需要主密码",
         "wrong_master_password": "主密码错误",
-        "master_password_set": "主密码已设置"
+        "master_password_set": "主密码已设置",
+        "file_too_large": "文件太大 (最大 5MB)",
+        "decompression_limit": "解压限制已超出 (Zip 炸弹保护)"
     }
 };

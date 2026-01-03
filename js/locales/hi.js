@@ -78,6 +78,8 @@ window.SecrEditLocales.hi = {
         "set_password": "पासवर्ड सेट करें",
         "master_password_required": "मास्टर पासवर्ड आवश्यक है",
         "wrong_master_password": "गलत मास्टर पासवर्ड",
-        "master_password_set": "मास्टर पासवर्ड सेट हो गया"
+        "master_password_set": "मास्टर पासवर्ड सेट हो गया",
+        "file_too_large": "फ़ाइल बहुत बड़ी है (अधिकतम 5MB)",
+        "decompression_limit": "डिकंप्रेशन सीमा पार हो गई (ज़िप बम सुरक्षा)"
     }
 };

@@ -78,6 +78,8 @@ window.SecrEditLocales.ru = {
         "set_password": "Установить пароль",
         "master_password_required": "Требуется мастер-пароль",
         "wrong_master_password": "Неверный мастер-пароль",
-        "master_password_set": "Мастер-пароль установлен"
+        "master_password_set": "Мастер-пароль установлен",
+        "file_too_large": "Файл слишком большой (макс. 5МБ)",
+        "decompression_limit": "Превышен лимит декомпрессии (защита от zip-бомб)"
     }
 };

@@ -78,6 +78,8 @@ window.SecrEditLocales.de = {
         "set_password": "Passwort festlegen",
         "master_password_required": "Master-Passwort erforderlich",
         "wrong_master_password": "Falsches Master-Passwort",
-        "master_password_set": "Master-Passwort festgelegt"
+        "master_password_set": "Master-Passwort festgelegt",
+        "file_too_large": "Datei ist zu groß (max. 5MB)",
+        "decompression_limit": "Dekomprimierungslimit überschritten (Zip-Bomben-Schutz)"
     }
 };

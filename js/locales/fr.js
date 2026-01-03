@@ -78,6 +78,8 @@ window.SecrEditLocales.fr = {
         "set_password": "Définir le mot de passe",
         "master_password_required": "Mot de passe maître requis",
         "wrong_master_password": "Mauvais mot de passe maître",
-        "master_password_set": "Mot de passe maître défini"
+        "master_password_set": "Mot de passe maître défini",
+        "file_too_large": "Le fichier est trop volumineux (max 5Mo)",
+        "decompression_limit": "Limite de décompression dépassée (protection zip bomb)"
     }
 };

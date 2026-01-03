@@ -78,6 +78,8 @@ window.SecrEditLocales.ar = {
         "set_password": "تعيين كلمة المرور",
         "master_password_required": "كلمة المرور الرئيسية مطلوبة",
         "wrong_master_password": "كلمة مرور رئيسية خاطئة",
-        "master_password_set": "تم تعيين كلمة المرور الرئيسية"
+        "master_password_set": "تم تعيين كلمة المرور الرئيسية",
+        "file_too_large": "الملف كبير جداً (الحد الأقصى 5 ميجابايت)",
+        "decompression_limit": "تجاوز حد فك الضغط (حماية من القنابل المضغوطة)"
     }
 };

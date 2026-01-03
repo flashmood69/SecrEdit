@@ -78,6 +78,8 @@ window.SecrEditLocales.bn = {
         "set_password": "পাসওয়ার্ড সেট করুন",
         "master_password_required": "মাস্টার পাসওয়ার্ড প্রয়োজন",
         "wrong_master_password": "ভুল মাস্টার পাসওয়ার্ড",
-        "master_password_set": "মাস্টার পাসওয়ার্ড সেট করা হয়েছে"
+        "master_password_set": "মাস্টার পাসওয়ার্ড সেট করা হয়েছে",
+        "file_too_large": "ফাইলটি খুব বড় (সর্বোচ্চ 5MB)",
+        "decompression_limit": "ডিকম্প্রেশন সীমা অতিক্রম করেছে (জিপ বোমা সুরক্ষা)"
     }
 };

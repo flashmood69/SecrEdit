@@ -25,6 +25,8 @@ SecrEdit uses industry-standard cryptographic primitives provided by the Web Cry
 - **Algorithm**: AES-GCM (256-bit) for authenticated encryption.
 - **Key Derivation**: PBKDF2 with SHA-256 and 600,000 iterations to derive the encryption key from your password.
 - **Privacy**: No tracking, no cookies, and no server-side backend. Your data is yours.
+- **DoS Protection**: Import file size limits (5MB) and decompression limits (10MB) to prevent memory exhaustion attacks.
+- **Security Headers**: Includes configuration for strict Content Security Policy (CSP), HSTS, and other security headers for production deployments.
 
 ## 🛠️ Technology Stack
 

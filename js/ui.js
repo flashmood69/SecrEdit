@@ -10,6 +10,7 @@ const createSvgIcon = (d) => {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('fill', 'currentColor');
     path.setAttribute('d', d);
+    svg.appendChild(path);
     return svg;
 };
 
@@ -45,6 +46,9 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
     const NO_SECRETS_PROFILE = 'no_secrets';
+    const MAX_HASH_ENCODED_PAYLOAD_CHARS = 100000;
+    const MAX_IMPORTED_ENCODED_PAYLOAD_CHARS = 4500000;
+    const MAX_PROFILE_NAME_ENCODED_CHARS = 512;
 
     const normalizeProfileName = (name) => (name || '').trim().toLowerCase();
 
@@ -76,12 +80,19 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const profileEncoded = rest.slice(0, idx);
         const payload = rest.slice(idx + 1);
         if (!profileEncoded || !payload) return { payload, profileName: null };
+        if (profileEncoded.length > MAX_PROFILE_NAME_ENCODED_CHARS) return { payload, profileName: null };
         try {
             return { payload, profileName: decodeProfileName(profileEncoded) };
         } catch {
             return { payload, profileName: null };
         }
     };
+
+    const isEncodedPayloadWithinLimit = (payload, maxChars) => (
+        typeof payload === 'string'
+        && payload.length > 0
+        && payload.length <= maxChars
+    );
 
     const getSelectedProfileName = () => {
         if (!profileNameEl) return NO_SECRETS_PROFILE;
@@ -238,8 +249,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }
     };
 
-    const performDecryption = async (data, password) => {
+    const performDecryption = async (data, password, opts = {}) => {
         if (!data || !editor) return false;
+
+        const maxEncodedChars = typeof opts.maxEncodedChars === 'number' ? opts.maxEncodedChars : MAX_HASH_ENCODED_PAYLOAD_CHARS;
+        const invalidStatusKey = typeof opts.invalidStatusKey === 'string' ? opts.invalidStatusKey : 'invalid_data';
+        if (!isEncodedPayloadWithinLimit(data, maxEncodedChars)) {
+            setStatus(invalidStatusKey);
+            return false;
+        }
 
         const currentId = ++lastDecryptionId;
 
@@ -285,7 +303,12 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             updateCounts();
             scheduleSync();
             return true;
-        } catch {}
+        } catch (e) {
+            if (e === 'Decompression limit exceeded' || (e.message && e.message === 'Decompression limit exceeded')) {
+                setStatus('decompression_limit');
+                return false;
+            }
+        }
 
         if (currentId === lastDecryptionId) setStatus('wrong_key');
         return false;
@@ -364,11 +387,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const raw = location.hash.substring(1);
         if (raw) {
             const { payload, profileName } = parseHashWithProfile(raw);
+            if (!isEncodedPayloadWithinLimit(payload, MAX_HASH_ENCODED_PAYLOAD_CHARS)) {
+                setStatus('invalid_data');
+                return;
+            }
             if (profileName) {
                 const ok = await ensureProfileAvailable(profileName);
                 if (!ok) return;
             }
-            await performDecryption(payload, keyInput.value);
+            await performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
             return;
         }
     });
@@ -488,16 +515,17 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         if (!checkRaw) throw new Error('Operation failed');
         let check;
         try {
-            check = JSON.parse(checkRaw);
-        } catch {
-            throw new Error('Operation failed');
-        }
-        try {
-            await decryptStringWithKey(key, check);
-        } catch {
-            throw new Error('Wrong master password');
-        }
-        profilesMasterKey = key;
+                    check = JSON.parse(checkRaw);
+                } catch {
+                    throw new Error('Operation failed');
+                }
+                try {
+                    await decryptStringWithKey(key, check);
+                } catch (e) {
+                    if (e.message === 'Decompression limit exceeded') throw e;
+                    throw new Error('Wrong master password');
+                }
+                profilesMasterKey = key;
         return key;
     };
 
@@ -978,7 +1006,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             e.stopPropagation();
             selectNoSecretsInUi();
             const { payload } = parseHashWithProfile(location.hash.substring(1));
-            if (payload && !editor.value) performDecryption(payload, '');
+            if (payload && !editor.value) performDecryption(payload, '', { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
             else if (editor.value) scheduleSync();
             profilePopover.classList.remove('show');
         });
@@ -1047,7 +1075,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                     }
                     await selectProfileInUi(p);
                     const { payload } = parseHashWithProfile(location.hash.substring(1));
-                    if (payload && !editor.value) performDecryption(payload, keyInput.value);
+                    if (payload && !editor.value) performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
                     else if (editor.value) scheduleSync();
                     profilePopover.classList.remove('show');
                 });
@@ -1185,6 +1213,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         });
     }
 
+    const MAX_IMPORT_SIZE = 5 * 1024 * 1024; // 5MB
+
     if (importBtn) {
         importBtn.addEventListener('click', () => {
             const input = document.createElement('input');
@@ -1193,6 +1223,9 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             input.onchange = () => {
                 const file = input.files && input.files[0];
                 if (!file) return;
+                if (file.size > MAX_IMPORT_SIZE) {
+                    return alert(i18n.t('file_too_large'));
+                }
                 const reader = new FileReader();
                 reader.onload = async () => {
                     let parsed;
@@ -1219,6 +1252,10 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                         setStatus('invalid_file');
                         return;
                     }
+                    if (!isEncodedPayloadWithinLimit(data, MAX_IMPORTED_ENCODED_PAYLOAD_CHARS)) {
+                        setStatus('invalid_file');
+                        return;
+                    }
                     if (typeof profile === 'string' && profile) {
                         let profileName;
                         try {
@@ -1229,7 +1266,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                             if (!ok) return;
                         }
                     }
-                    await performDecryption(data, keyInput.value);
+                    await performDecryption(data, keyInput.value, { maxEncodedChars: MAX_IMPORTED_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_file' });
                 };
                 reader.readAsText(file);
             };

@@ -78,6 +78,8 @@ window.SecrEditLocales.pt = {
         "set_password": "Definir Senha",
         "master_password_required": "Senha mestra obrigatória",
         "wrong_master_password": "Senha mestra incorreta",
-        "master_password_set": "Senha mestra definida"
+        "master_password_set": "Senha mestra definida",
+        "file_too_large": "Arquivo muito grande (máx. 5MB)",
+        "decompression_limit": "Limite de descompressão excedido (proteção zip bomb)"
     }
 };

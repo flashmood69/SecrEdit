@@ -98,7 +98,8 @@ class I18nManager {
             Array.from(el.attributes).forEach(attr => {
                 if (attr.name.startsWith('data-i18n-') && attr.name !== 'data-i18n-options') {
                     const targetAttr = attr.name.replace('data-i18n-', '');
-                    if (targetAttr) {
+                    const allowedAttrs = ['title', 'placeholder', 'aria-label', 'alt', 'value', 'label'];
+                    if (targetAttr && allowedAttrs.includes(targetAttr)) {
                          el.setAttribute(targetAttr, this.t(attr.value));
                     }
                 }
