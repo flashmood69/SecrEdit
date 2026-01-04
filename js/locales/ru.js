@@ -80,6 +80,8 @@ window.SecrEditLocales.ru = {
         "wrong_master_password": "Неверный мастер-пароль",
         "master_password_set": "Мастер-пароль установлен",
         "file_too_large": "Файл слишком большой (макс. 5МБ)",
-        "decompression_limit": "Превышен лимит декомпрессии (защита от zip-бомб)"
+        "decompression_limit": "Превышен лимит декомпрессии (защита от zip-бомб)",
+        "lock_app": "Заблокировать",
+        "lock_confirmation": "Вы уверены, что хотите заблокировать приложение? Это удалит все данные."
     }
 };

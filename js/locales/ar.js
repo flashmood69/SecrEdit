@@ -80,6 +80,8 @@ window.SecrEditLocales.ar = {
         "wrong_master_password": "كلمة مرور رئيسية خاطئة",
         "master_password_set": "تم تعيين كلمة المرور الرئيسية",
         "file_too_large": "الملف كبير جداً (الحد الأقصى 5 ميجابايت)",
-        "decompression_limit": "تجاوز حد فك الضغط (حماية من القنابل المضغوطة)"
+        "decompression_limit": "تجاوز حد فك الضغط (حماية من القنابل المضغوطة)",
+        "lock_app": "قفل",
+        "lock_confirmation": "هل أنت متأكد أنك تريد قفل التطبيق؟ سيؤدي هذا إلى مسح جميع البيانات."
     }
 };

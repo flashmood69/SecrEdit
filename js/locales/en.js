@@ -80,6 +80,8 @@ window.SecrEditLocales.en = {
         "wrong_master_password": "Wrong master password",
         "master_password_set": "Master password set",
         "file_too_large": "File is too large (max 5MB)",
-        "decompression_limit": "Decompression limit exceeded (zip bomb protection)"
+        "decompression_limit": "Decompression limit exceeded (zip bomb protection)",
+        "lock_app": "Lock",
+        "lock_confirmation": "Are you sure you want to lock the application? This will clear all data."
     }
 };

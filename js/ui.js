@@ -23,6 +23,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const burgerBtn = $('burger-btn');
     const editor = $('editor');
     const status = $('status');
+    const appLogo = document.querySelector('.app-branding');
     const profileNameEl = $('profile-name');
     const charCount = $('char-count');
     const urlCount = $('url-count');
@@ -42,6 +43,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const copyTextBtn = $('copyTextBtn');
     const copySecretBtn = $('copySecretBtn');
     const clearBtn = $('clearBtn');
+    const lockBtn = $('lockBtn');
 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
@@ -102,15 +104,55 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     };
 
     const setStatus = (key, color = '', params = {}) => {
-        if (!status) return;
-        status.setAttribute('data-i18n', key);
-        if (Object.keys(params).length) {
-            status.setAttribute('data-i18n-options', JSON.stringify(params));
-        } else {
-            status.removeAttribute('data-i18n-options');
+        if (status) {
+            status.setAttribute('data-i18n', key);
+            if (Object.keys(params).length) {
+                status.setAttribute('data-i18n-options', JSON.stringify(params));
+            } else {
+                status.removeAttribute('data-i18n-options');
+            }
+            status.innerText = i18n.t(key, params);
+            // status.style.color = color; // Hidden, so color doesn't matter
         }
-        status.innerText = i18n.t(key, params);
-        status.style.color = color;
+
+        if (appLogo) {
+            appLogo.classList.remove('status-encrypted', 'status-weak', 'status-plain', 'status-processing', 'status-error');
+            const text = i18n.t(key, params);
+            appLogo.setAttribute('title', text);
+            appLogo.setAttribute('aria-label', text);
+
+            switch (key) {
+                case 'ready_encrypted':
+                case 'synced_encrypted':
+                case 'decrypted':
+                    appLogo.classList.add('status-encrypted');
+                    break;
+                case 'unencrypted':
+                case 'status_ready':
+                case 'loaded_unencrypted':
+                case 'synced_unencrypted':
+                case 'no_secrets':
+                    appLogo.classList.add('status-plain');
+                    break;
+                case 'weak_key':
+                case 'wrong_key':
+                case 'secret_key_required':
+                case 'invalid_data':
+                case 'sync_error':
+                case 'operation_failed':
+                case 'decompression_limit':
+                    appLogo.classList.add('status-error');
+                    break;
+                case 'decrypting':
+                case 'encrypting':
+                case 'loading_unencrypted':
+                case 'syncing_unencrypted':
+                    appLogo.classList.add('status-processing');
+                    break;
+                default:
+                    appLogo.classList.add('status-plain');
+            }
+        }
     };
 
     const flashStatus = (key, ms = 1000) => {
@@ -838,10 +880,14 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         keyWrapper.style.margin = '0';
 
         const newKeyInput = document.createElement('input');
-        newKeyInput.type = 'password';
+        newKeyInput.type = 'text';
+        newKeyInput.className = 'masked-input';
         newKeyInput.placeholder = i18n.t('key_placeholder');
-        newKeyInput.setAttribute('autocomplete', 'off');
-        newKeyInput.setAttribute('name', 'profile_key');
+        newKeyInput.setAttribute('autocomplete', 'one-time-code');
+        newKeyInput.setAttribute('autocorrect', 'off');
+        newKeyInput.setAttribute('autocapitalize', 'off');
+        newKeyInput.setAttribute('spellcheck', 'false');
+        newKeyInput.setAttribute('name', 'profile_key_' + Math.random().toString(36).substring(7));
         newKeyInput.style.width = '100%';
         newKeyInput.addEventListener('click', (e) => e.stopPropagation());
         if (typeof opts.prefillPass === 'string') newKeyInput.value = opts.prefillPass;
@@ -875,8 +921,12 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         toggleBtn.style.padding = '0';
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const show = newKeyInput.type === 'password';
-            newKeyInput.type = show ? 'text' : 'password';
+            const show = newKeyInput.classList.contains('masked-input');
+            if (show) {
+                newKeyInput.classList.remove('masked-input');
+            } else {
+                newKeyInput.classList.add('masked-input');
+            }
             toggleBtn.replaceChildren(show ? ICON_HIDDEN() : ICON_VISIBLE());
         });
 
@@ -1336,6 +1386,27 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             history.replaceState(null, '', location.pathname);
             updateStrengthMeter();
             updateCounts();
+            editor.focus();
+        });
+    }
+
+    if (lockBtn) {
+        lockBtn.addEventListener('click', () => {
+            if (!confirm(i18n.t('lock_confirmation'))) return;
+            clearTimeout(syncTimer);
+            lastDecryptionId++;
+            editor.value = '';
+            keyInput.value = '';
+            lockProfilesMasterKey();
+            if (profileNameEl) {
+                profileNameEl.setAttribute('data-i18n', 'no_secrets');
+                profileNameEl.removeAttribute('data-i18n-options');
+                profileNameEl.innerText = i18n.t('no_secrets');
+            }
+            history.replaceState(null, '', location.pathname);
+            updateStrengthMeter();
+            updateCounts();
+            setStatus('status_ready');
             editor.focus();
         });
     }

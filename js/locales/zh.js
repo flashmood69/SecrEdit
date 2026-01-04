@@ -80,6 +80,8 @@ window.SecrEditLocales.zh = {
         "wrong_master_password": "主密码错误",
         "master_password_set": "主密码已设置",
         "file_too_large": "文件太大 (最大 5MB)",
-        "decompression_limit": "解压限制已超出 (Zip 炸弹保护)"
+        "decompression_limit": "解压限制已超出 (Zip 炸弹保护)",
+        "lock_app": "锁定",
+        "lock_confirmation": "您确定要锁定应用程序吗？这将清除所有数据。"
     }
 };

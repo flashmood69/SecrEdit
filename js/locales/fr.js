@@ -80,6 +80,8 @@ window.SecrEditLocales.fr = {
         "wrong_master_password": "Mauvais mot de passe maître",
         "master_password_set": "Mot de passe maître défini",
         "file_too_large": "Le fichier est trop volumineux (max 5Mo)",
-        "decompression_limit": "Limite de décompression dépassée (protection zip bomb)"
+        "decompression_limit": "Limite de décompression dépassée (protection zip bomb)",
+        "lock_app": "Verrouiller",
+        "lock_confirmation": "Êtes-vous sûr de vouloir verrouiller l'application ? Cela effacera toutes les données."
     }
 };

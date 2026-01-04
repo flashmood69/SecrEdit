@@ -80,6 +80,8 @@ window.SecrEditLocales.es = {
         "wrong_master_password": "Contraseña maestra incorrecta",
         "master_password_set": "Contraseña maestra establecida",
         "file_too_large": "El archivo es demasiado grande (máx. 5MB)",
-        "decompression_limit": "Límite de descompresión excedido (protección zip bomb)"
+        "decompression_limit": "Límite de descompresión excedido (protección zip bomb)",
+        "lock_app": "Bloquear",
+        "lock_confirmation": "¿Está seguro de que desea bloquear la aplicación? Esto borrará todos los datos."
     }
 };

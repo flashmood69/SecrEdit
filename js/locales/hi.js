@@ -80,6 +80,8 @@ window.SecrEditLocales.hi = {
         "wrong_master_password": "गलत मास्टर पासवर्ड",
         "master_password_set": "मास्टर पासवर्ड सेट हो गया",
         "file_too_large": "फ़ाइल बहुत बड़ी है (अधिकतम 5MB)",
-        "decompression_limit": "डिकंप्रेशन सीमा पार हो गई (ज़िप बम सुरक्षा)"
+        "decompression_limit": "डिकंप्रेशन सीमा पार हो गई (ज़िप बम सुरक्षा)",
+        "lock_app": "लॉक करें",
+        "lock_confirmation": "क्या आप वाकई एप्लिकेशन को लॉक करना चाहते हैं? इससे सारा डेटा मिट जाएगा।"
     }
 };

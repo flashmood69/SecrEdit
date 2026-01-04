@@ -80,6 +80,8 @@ window.SecrEditLocales.bn = {
         "wrong_master_password": "ভুল মাস্টার পাসওয়ার্ড",
         "master_password_set": "মাস্টার পাসওয়ার্ড সেট করা হয়েছে",
         "file_too_large": "ফাইলটি খুব বড় (সর্বোচ্চ 5MB)",
-        "decompression_limit": "ডিকম্প্রেশন সীমা অতিক্রম করেছে (জিপ বোমা সুরক্ষা)"
+        "decompression_limit": "ডিকম্প্রেশন সীমা অতিক্রম করেছে (জিপ বোমা সুরক্ষা)",
+        "lock_app": "লক",
+        "lock_confirmation": "আপনি কি নিশ্চিত যে আপনি অ্যাপ্লিকেশনটি লক করতে চান? এটি সমস্ত ডেটা মুছে ফেলবে।"
     }
 };
