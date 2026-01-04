@@ -45,7 +45,7 @@ window.SecrEditLocales.hi = {
         "decrypted": "डिक्रिप्ट किया गया",
         "wrong_key": "गलत कुंजी",
         "nothing_to_export": "निर्यात करने के लिए कुछ नहीं",
-        "export_key_required": "गुप्त कुंजी आवश्यक (8+ अक्षर) या सादे पाठ के लिए खाली छोड़ दें",
+        "export_key_required": "गुप्त कुंजी आवश्यक (12+ अक्षर) या सादे पाठ के लिए खाली छोड़ दें",
         "invalid_file": "अमान्य फ़ाइल",
         "paste_failed": "पेस्ट विफल",
         "no_content_to_share": "साझा करने के लिए कोई सामग्री नहीं",
@@ -81,7 +81,7 @@ window.SecrEditLocales.hi = {
         "master_password_set": "मास्टर पासवर्ड सेट हो गया",
         "file_too_large": "फ़ाइल बहुत बड़ी है (अधिकतम 5MB)",
         "decompression_limit": "डिकंप्रेशन सीमा पार हो गई (ज़िप बम सुरक्षा)",
-        "lock_app": "लॉक करें",
-        "lock_confirmation": "क्या आप वाकई एप्लिकेशन को लॉक करना चाहते हैं? इससे सारा डेटा मिट जाएगा।"
+        "wipe_app": "मिटाएं",
+        "wipe_confirmation": "क्या आप वाकई एप्लिकेशन को मिटाना चाहते हैं? इससे सारा डेटा मिट जाएगा।"
     }
 };

@@ -65,6 +65,7 @@ button svg {
     width: 32px;
     height: 32px;
     transition: filter 0.3s ease;
+    filter: drop-shadow(0 0 6px #ff4757);
 }
 
 /* Status States */
@@ -78,7 +79,7 @@ button svg {
 }
 
 .app-branding.status-plain img {
-    filter: grayscale(100%) opacity(0.7);
+    filter: drop-shadow(0 0 6px #ff4757);
 }
 
 .app-branding.status-processing img {
@@ -346,6 +347,44 @@ input#key-input:focus {
 #find-replace-bar.hidden { display: none; }
 #find-replace-bar input { padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 14px; flex: 1; min-width: 80px; }
 #find-replace-bar button { padding: 6px 10px; font-size: 14px; white-space: nowrap; }
+
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+.confirm-dialog {
+    width: min(420px, 100%);
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 16px;
+    box-sizing: border-box;
+}
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+.confirm-actions .btn-cancel {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+.confirm-actions .btn-primary {
+    background: var(--accent);
+}
+.confirm-actions .btn-danger {
+    background: #ff4757;
+}
 
 @media print {
     header,

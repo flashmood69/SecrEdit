@@ -45,7 +45,7 @@ window.SecrEditLocales.en = {
         "decrypted": "Decrypted",
         "wrong_key": "Wrong key",
         "nothing_to_export": "Nothing to export",
-        "export_key_required": "Secret key required (8+ chars) or leave empty for plain text",
+        "export_key_required": "Secret key required (12+ chars) or leave empty for plain text",
         "invalid_file": "Invalid file",
         "paste_failed": "Paste failed",
         "no_content_to_share": "No content to share",
@@ -81,7 +81,7 @@ window.SecrEditLocales.en = {
         "master_password_set": "Master password set",
         "file_too_large": "File is too large (max 5MB)",
         "decompression_limit": "Decompression limit exceeded (zip bomb protection)",
-        "lock_app": "Lock",
-        "lock_confirmation": "Are you sure you want to lock the application? This will clear all data."
+        "wipe_app": "Wipe",
+        "wipe_confirmation": "Are you sure you want to wipe the application? This will clear all data."
     }
 };

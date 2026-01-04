@@ -45,7 +45,7 @@ window.SecrEditLocales.de = {
         "decrypted": "Entschlüsselt",
         "wrong_key": "Falscher Schlüssel",
         "nothing_to_export": "Nichts zu exportieren",
-        "export_key_required": "Geheimer Schlüssel erforderlich (8+ Zeichen) oder leer lassen für Klartext",
+        "export_key_required": "Geheimer Schlüssel erforderlich (12+ Zeichen) oder leer lassen für Klartext",
         "invalid_file": "Ungültige Datei",
         "paste_failed": "Einfügen fehlgeschlagen",
         "no_content_to_share": "Kein Inhalt zum Teilen",
@@ -81,7 +81,7 @@ window.SecrEditLocales.de = {
         "master_password_set": "Master-Passwort festgelegt",
         "file_too_large": "Datei ist zu groß (max. 5MB)",
         "decompression_limit": "Dekomprimierungslimit überschritten (Zip-Bomben-Schutz)",
-        "lock_app": "Sperren",
-        "lock_confirmation": "Sind Sie sicher, dass Sie die Anwendung sperren möchten? Dies wird alle Daten löschen."
+        "wipe_app": "Löschen",
+        "wipe_confirmation": "Sind Sie sicher, dass Sie die Anwendung löschen möchten? Dies löscht alle Daten."
     }
 };

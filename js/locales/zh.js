@@ -45,7 +45,7 @@ window.SecrEditLocales.zh = {
         "decrypted": "已解密",
         "wrong_key": "密钥错误",
         "nothing_to_export": "没有可导出的内容",
-        "export_key_required": "需要密钥 (8+ 字符) 或留空以保存为纯文本",
+        "export_key_required": "需要密钥 (12+ 字符) 或留空以保存为纯文本",
         "invalid_file": "无效文件",
         "paste_failed": "粘贴失败",
         "no_content_to_share": "没有可分享的内容",
@@ -81,7 +81,7 @@ window.SecrEditLocales.zh = {
         "master_password_set": "主密码已设置",
         "file_too_large": "文件太大 (最大 5MB)",
         "decompression_limit": "解压限制已超出 (Zip 炸弹保护)",
-        "lock_app": "锁定",
-        "lock_confirmation": "您确定要锁定应用程序吗？这将清除所有数据。"
+        "wipe_app": "清除",
+        "wipe_confirmation": "您确定要清除应用程序吗？这将清除所有数据。"
     }
 };

@@ -45,7 +45,7 @@ window.SecrEditLocales.ar = {
         "decrypted": "تم فك التشفير",
         "wrong_key": "مفتاح خاطئ",
         "nothing_to_export": "لا يوجد شيء لتصديره",
-        "export_key_required": "المفتاح السري مطلوب (8+ أحرف) أو اتركه فارغًا للنص العادي",
+        "export_key_required": "المفتاح السري مطلوب (12+ أحرف) أو اتركه فارغًا للنص العادي",
         "invalid_file": "ملف غير صالح",
         "paste_failed": "فشل اللصق",
         "no_content_to_share": "لا يوجد محتوى للمشاركة",
@@ -81,7 +81,7 @@ window.SecrEditLocales.ar = {
         "master_password_set": "تم تعيين كلمة المرور الرئيسية",
         "file_too_large": "الملف كبير جداً (الحد الأقصى 5 ميجابايت)",
         "decompression_limit": "تجاوز حد فك الضغط (حماية من القنابل المضغوطة)",
-        "lock_app": "قفل",
-        "lock_confirmation": "هل أنت متأكد أنك تريد قفل التطبيق؟ سيؤدي هذا إلى مسح جميع البيانات."
+        "wipe_app": "مسح",
+        "wipe_confirmation": "هل أنت متأكد أنك تريد مسح التطبيق؟ سيؤدي هذا إلى مسح جميع البيانات."
     }
 };

@@ -43,7 +43,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const copyTextBtn = $('copyTextBtn');
     const copySecretBtn = $('copySecretBtn');
     const clearBtn = $('clearBtn');
-    const lockBtn = $('lockBtn');
+    const wipeBtn = $('wipeBtn');
 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
@@ -120,38 +120,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             const text = i18n.t(key, params);
             appLogo.setAttribute('title', text);
             appLogo.setAttribute('aria-label', text);
-
-            switch (key) {
-                case 'ready_encrypted':
-                case 'synced_encrypted':
-                case 'decrypted':
-                    appLogo.classList.add('status-encrypted');
-                    break;
-                case 'unencrypted':
-                case 'status_ready':
-                case 'loaded_unencrypted':
-                case 'synced_unencrypted':
-                case 'no_secrets':
-                    appLogo.classList.add('status-plain');
-                    break;
-                case 'weak_key':
-                case 'wrong_key':
-                case 'secret_key_required':
-                case 'invalid_data':
-                case 'sync_error':
-                case 'operation_failed':
-                case 'decompression_limit':
-                    appLogo.classList.add('status-error');
-                    break;
-                case 'decrypting':
-                case 'encrypting':
-                case 'loading_unencrypted':
-                case 'syncing_unencrypted':
-                    appLogo.classList.add('status-processing');
-                    break;
-                default:
-                    appLogo.classList.add('status-plain');
-            }
+            const isEncryptedProfileSelected = getSelectedProfileName() !== NO_SECRETS_PROFILE;
+            appLogo.classList.add(isEncryptedProfileSelected ? 'status-encrypted' : 'status-plain');
         }
     };
 
@@ -167,8 +137,9 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }, ms);
     };
 
+    const MIN_PASSWORD_LENGTH = 12;
     const isNonEmptyKey = (pw) => typeof pw === 'string' && pw.length > 0;
-    const isKeyStrongEnoughToEncrypt = (pw) => typeof pw === 'string' && pw.length >= 8;
+    const isKeyStrongEnoughToEncrypt = (pw) => typeof pw === 'string' && pw.length >= MIN_PASSWORD_LENGTH;
 
     const updateCounts = () => {
         if (!editor || !charCount || !urlCount) return;
@@ -210,14 +181,14 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }
 
         const score = [
-            pw.length >= 8,
-            pw.length >= 12,
+            pw.length >= MIN_PASSWORD_LENGTH,
+            pw.length >= MIN_PASSWORD_LENGTH + 4,
             /[A-Z]/.test(pw),
             /[0-9]/.test(pw),
             /[^A-Za-z0-9]/.test(pw)
         ].filter(Boolean).length;
 
-        const weak = pw.length < 8;
+        const weak = pw.length < MIN_PASSWORD_LENGTH;
         const color = weak ? '#ff4757' : (['#ff4757', '#ff4757', '#ffa502', '#2ed573', '#1e90ff'][score - 1] || '#ff4757');
 
         bar.style.width = `${(score / 5) * 100}%`;
@@ -652,6 +623,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         lockBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             lockProfilesMasterKey();
+            selectNoSecretsInUi();
+            if (editor && editor.value) scheduleSync();
             await renderProfiles({ ...opts, focusUnlock: true });
             flashStatus('profiles_locked');
         });
@@ -1062,7 +1035,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         });
         profilePopover.appendChild(defaultItem);
 
-        if (profiles.length === 0) {
+        const canShowCustomProfiles = Boolean(profilesMasterKey);
+
+        if (!canShowCustomProfiles) {
+            const msg = document.createElement('div');
+            msg.className = 'profile-item';
+            msg.style.justifyContent = 'center';
+            msg.innerText = profiles.length ? i18n.t('profiles_locked') : i18n.t('no_profiles');
+            profilePopover.appendChild(msg);
+        } else if (profiles.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'profile-item';
             empty.style.justifyContent = 'center';
@@ -1146,6 +1127,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             profileNameEl.setAttribute('data-i18n', 'no_secrets');
             profileNameEl.innerText = i18n.t('no_secrets');
         }
+        setStatus('no_secrets');
     };
 
     const selectProfileInUi = async (p) => {
@@ -1169,6 +1151,9 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             profileNameEl.removeAttribute('data-i18n');
             profileNameEl.innerText = p.name;
         }
+        if (isKeyStrongEnoughToEncrypt(keyInput.value)) setStatus('ready_encrypted');
+        else if (!isNonEmptyKey(keyInput.value)) setStatus('unencrypted', '#ff4757');
+        else setStatus('weak_key', '#ff4757');
         return true;
     };
 
@@ -1379,8 +1364,13 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     }
 
     if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            if (!confirm(i18n.t('clear_confirm'))) return;
+        clearBtn.addEventListener('click', async () => {
+            const confirmed = await confirmDialog(i18n.t('clear_confirm'), {
+                confirmText: i18n.t('new_doc'),
+                confirmClassName: 'btn-primary',
+                cancelText: i18n.t('close')
+            });
+            if (!confirmed) return;
             editor.value = '';
             keyInput.value = '';
             history.replaceState(null, '', location.pathname);
@@ -1390,23 +1380,82 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         });
     }
 
-    if (lockBtn) {
-        lockBtn.addEventListener('click', () => {
-            if (!confirm(i18n.t('lock_confirmation'))) return;
+    const confirmDialog = (message, opts = {}) => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+
+            const dialog = document.createElement('div');
+            dialog.className = 'confirm-dialog';
+
+            const text = document.createElement('div');
+            text.innerText = message || '';
+
+            const actions = document.createElement('div');
+            actions.className = 'confirm-actions';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-cancel';
+            cancelBtn.innerText = typeof opts.cancelText === 'string' ? opts.cancelText : i18n.t('close');
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = typeof opts.confirmClassName === 'string' ? opts.confirmClassName : 'btn-danger';
+            confirmBtn.innerText = typeof opts.confirmText === 'string' ? opts.confirmText : i18n.t('wipe_app');
+
+            const cleanup = (result) => {
+                window.removeEventListener('keydown', onKeydown, true);
+                overlay.remove();
+                resolve(result);
+            };
+
+            const onKeydown = (e) => {
+                if (e.key === 'Escape') cleanup(false);
+            };
+
+            overlay.addEventListener('click', () => cleanup(false));
+            dialog.addEventListener('click', (e) => e.stopPropagation());
+            cancelBtn.addEventListener('click', () => cleanup(false));
+            confirmBtn.addEventListener('click', () => cleanup(true));
+            window.addEventListener('keydown', onKeydown, true);
+
+            actions.appendChild(cancelBtn);
+            actions.appendChild(confirmBtn);
+            dialog.appendChild(text);
+            dialog.appendChild(actions);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            cancelBtn.focus();
+        });
+    };
+
+    if (wipeBtn) {
+        wipeBtn.addEventListener('click', async () => {
+            const confirmed = await confirmDialog(i18n.t('wipe_confirmation'), {
+                confirmText: i18n.t('wipe_app'),
+                confirmClassName: 'btn-danger',
+                cancelText: i18n.t('close')
+            });
+            if (!confirmed) return;
             clearTimeout(syncTimer);
             lastDecryptionId++;
             editor.value = '';
             keyInput.value = '';
             lockProfilesMasterKey();
-            if (profileNameEl) {
-                profileNameEl.setAttribute('data-i18n', 'no_secrets');
-                profileNameEl.removeAttribute('data-i18n-options');
-                profileNameEl.innerText = i18n.t('no_secrets');
-            }
+            localStorage.removeItem(ENCRYPTED_PROFILES_KEY);
+            localStorage.removeItem(ENCRYPTED_PROFILES_SALT_KEY);
+            localStorage.removeItem(ENCRYPTED_PROFILES_CHECK_KEY);
+            localStorage.removeItem('secredit_lang');
+            selectNoSecretsInUi();
+            if (profilePopover) profilePopover.classList.remove('show');
+            if (emojiPopover) emojiPopover.classList.remove('show');
+            if (langPopover) langPopover.classList.remove('show');
             history.replaceState(null, '', location.pathname);
             updateStrengthMeter();
             updateCounts();
-            setStatus('status_ready');
+            setStatus('no_secrets');
+            await renderProfiles();
             editor.focus();
         });
     }
