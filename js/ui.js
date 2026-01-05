@@ -595,6 +595,213 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         saveEncryptedProfiles(profiles);
     };
 
+    const promptDialog = (message, opts = {}) => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+
+            const dialog = document.createElement('div');
+            dialog.className = 'confirm-dialog';
+
+            const text = document.createElement('div');
+            text.innerText = message || '';
+
+            const input = document.createElement('input');
+            input.type = typeof opts.inputType === 'string' ? opts.inputType : 'password';
+            input.placeholder = typeof opts.placeholder === 'string' ? opts.placeholder : '';
+            input.setAttribute('autocomplete', 'current-password');
+            input.setAttribute('autocapitalize', 'none');
+            input.setAttribute('spellcheck', 'false');
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+            input.style.marginTop = '10px';
+            input.style.padding = '8px 10px';
+            input.style.height = '40px';
+            input.style.border = '1px solid var(--border)';
+            input.style.borderRadius = '4px';
+            input.style.background = 'var(--bg)';
+            input.style.color = 'var(--text)';
+
+            const actions = document.createElement('div');
+            actions.className = 'confirm-actions';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-cancel';
+            cancelBtn.innerText = typeof opts.cancelText === 'string' ? opts.cancelText : i18n.t('close');
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = typeof opts.confirmClassName === 'string' ? opts.confirmClassName : 'btn-primary';
+            confirmBtn.innerText = typeof opts.confirmText === 'string' ? opts.confirmText : i18n.t('unlock');
+
+            const cleanup = (result) => {
+                window.removeEventListener('keydown', onKeydown, true);
+                overlay.remove();
+                resolve(result);
+            };
+
+            const onKeydown = (e) => {
+                if (e.key === 'Escape') cleanup(null);
+                if (e.key === 'Enter') cleanup(input.value);
+            };
+
+            overlay.addEventListener('click', () => cleanup(null));
+            dialog.addEventListener('click', (e) => e.stopPropagation());
+            cancelBtn.addEventListener('click', () => cleanup(null));
+            confirmBtn.addEventListener('click', () => cleanup(input.value));
+            window.addEventListener('keydown', onKeydown, true);
+
+            actions.appendChild(cancelBtn);
+            actions.appendChild(confirmBtn);
+            dialog.appendChild(text);
+            dialog.appendChild(createPasswordManagerUsernameInput());
+            dialog.appendChild(input);
+            dialog.appendChild(actions);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            setTimeout(() => input.focus(), 0);
+        });
+    };
+
+    const backupProfilesToFile = async () => {
+        if (!profilesMasterKey) throw new Error('Profiles locked');
+        const profiles = await loadProfiles();
+        const plainProfiles = await Promise.all(profiles.map(async (p) => {
+            const pass = await decryptStringWithKey(profilesMasterKey, p.passEnc);
+            return { name: p.name, color: p.color, pass };
+        }));
+
+        const saltBytes = loadProfilesSalt() || getOrCreateProfilesSalt();
+        const backup = {
+            kind: 'profiles_backup',
+            formatVersion: 1,
+            kdf: { iterations: PROFILE_KDF_ITERATIONS, hash: 'SHA-256' },
+            salt: b64UrlEncodeBytes(saltBytes),
+            data: await encryptStringWithKey(profilesMasterKey, JSON.stringify({ profiles: plainProfiles }))
+        };
+
+        const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = `secredit-profiles-${new Date().toISOString().slice(0, 10)}.secredit-profiles`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+    };
+
+    const restoreProfilesFromFile = async () => {
+        const file = await new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.secredit-profiles,application/json';
+            input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+            input.click();
+        });
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert(i18n.t('file_too_large'));
+            return;
+        }
+
+        const raw = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Read failed'));
+            reader.readAsText(file);
+        });
+
+        let backup;
+        try {
+            backup = JSON.parse(raw);
+        } catch {
+            flashStatus('invalid_file');
+            return;
+        }
+
+        if (!backup || typeof backup !== 'object' || backup.kind !== 'profiles_backup' || backup.formatVersion !== 1) {
+            flashStatus('invalid_file');
+            return;
+        }
+        if (typeof backup.salt !== 'string' || !backup.salt || typeof backup.data !== 'object' || !backup.data) {
+            flashStatus('invalid_file');
+            return;
+        }
+
+        const masterPassword = await promptDialog(i18n.t('profiles_restore_password'), {
+            placeholder: i18n.t('master_password'),
+            confirmText: i18n.t('profiles_restore'),
+            confirmClassName: 'btn-primary',
+            cancelText: i18n.t('close')
+        });
+        if (masterPassword === null) return;
+        if (!isKeyStrongEnoughToEncrypt(masterPassword)) {
+            flashStatus('weak_key');
+            return;
+        }
+
+        let key;
+        try {
+            key = await deriveProfilesMasterKey(masterPassword, b64UrlDecodeToBytes(backup.salt));
+        } catch {
+            flashStatus('operation_failed');
+            return;
+        }
+
+        let decrypted;
+        try {
+            decrypted = await decryptStringWithKey(key, backup.data);
+        } catch {
+            flashStatus('wrong_master_password');
+            return;
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(decrypted);
+        } catch {
+            flashStatus('invalid_file');
+            return;
+        }
+
+        const incoming = parsed && Array.isArray(parsed.profiles) ? parsed.profiles : null;
+        if (!incoming) {
+            flashStatus('invalid_file');
+            return;
+        }
+
+        const confirmed = await confirmDialog(i18n.t('profiles_restore_confirm'), {
+            confirmText: i18n.t('profiles_restore'),
+            confirmClassName: 'btn-primary',
+            cancelText: i18n.t('close')
+        });
+        if (!confirmed) return;
+
+        const restored = [];
+        for (const p of incoming) {
+            if (!p || typeof p !== 'object') continue;
+            const name = typeof p.name === 'string' ? p.name.trim() : '';
+            const color = typeof p.color === 'string' && p.color ? p.color : '#2ed573';
+            const pass = typeof p.pass === 'string' ? p.pass : '';
+            if (!name) continue;
+            if (!isKeyStrongEnoughToEncrypt(pass)) continue;
+            restored.push({ name, color, pass });
+        }
+
+        localStorage.setItem(ENCRYPTED_PROFILES_SALT_KEY, backup.salt);
+        localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(await encryptStringWithKey(key, 'ok')));
+        saveEncryptedProfiles(await Promise.all(restored.map(async (p) => ({
+            name: p.name,
+            color: p.color,
+            passEnc: await encryptStringWithKey(key, p.pass)
+        }))));
+
+        profilesMasterKey = key;
+        selectNoSecretsInUi();
+        await renderProfiles();
+        flashStatus('profiles_restore_done');
+    };
+
     const renderProfiles = async (opts = {}) => {
         let profiles = [];
         try {
@@ -629,13 +836,42 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             flashStatus('profiles_locked');
         });
 
-        unlockHeader.appendChild(unlockTitle);
-
         if (profilesMasterKey) {
-            unlockTitle.innerText = i18n.t('profiles_unlocked');
+            unlockHeader.style.justifyContent = 'flex-end';
+
+            const backupBtn = document.createElement('button');
+            backupBtn.type = 'button';
+            backupBtn.className = 'unlock-profiles-lock-btn';
+            backupBtn.innerText = i18n.t('profiles_backup');
+            backupBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    await backupProfilesToFile();
+                    flashStatus('profiles_backup_done');
+                } catch {
+                    flashStatus('operation_failed');
+                }
+            });
+
+            const restoreBtn = document.createElement('button');
+            restoreBtn.type = 'button';
+            restoreBtn.className = 'unlock-profiles-lock-btn';
+            restoreBtn.innerText = i18n.t('profiles_restore');
+            restoreBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    await restoreProfilesFromFile();
+                } catch {
+                    flashStatus('operation_failed');
+                }
+            });
+
+            unlockHeader.appendChild(backupBtn);
+            unlockHeader.appendChild(restoreBtn);
             unlockHeader.appendChild(lockBtn);
             unlockContainer.appendChild(unlockHeader);
         } else if (hasProfilesMasterPassword()) {
+            unlockHeader.appendChild(unlockTitle);
             unlockTitle.innerText = i18n.t('unlock_profiles');
             unlockContainer.appendChild(unlockHeader);
 
@@ -1349,6 +1585,26 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }
     };
 
+    const clearClipboardBestEffort = async () => {
+        try {
+            await navigator.clipboard.writeText('');
+            return true;
+        } catch {}
+        try {
+            const textArea = document.createElement('textarea');
+            textArea.value = '';
+            textArea.style.position = 'fixed';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return ok;
+        } catch {
+            return false;
+        }
+    };
+
     if (copyTextBtn) {
         copyTextBtn.addEventListener('click', () => {
             const selected = editor.selectionStart !== editor.selectionEnd ? editor.value.slice(editor.selectionStart, editor.selectionEnd) : editor.value;
@@ -1357,9 +1613,30 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     }
 
     if (copySecretBtn) {
-        copySecretBtn.addEventListener('click', () => {
+        copySecretBtn.addEventListener('click', async () => {
             if (location.hash.length <= 1) return alert(i18n.t('no_content_to_share'));
-            copyWithFeedback(copySecretBtn, location.href);
+            
+            const url = location.href;
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: i18n.t('app_title'),
+                        text: i18n.t('app_title'),
+                        url: url
+                    });
+                    // Share was successful
+                    const oldChildren = Array.from(copySecretBtn.childNodes);
+                    copySecretBtn.replaceChildren(ICON_CHECK());
+                    setTimeout(() => copySecretBtn.replaceChildren(...oldChildren), 2000);
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    // Fallback to copy if share failed (e.g. not supported or other error)
+                }
+            }
+            
+            copyWithFeedback(copySecretBtn, url);
         });
     }
 
@@ -1438,6 +1715,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 cancelText: i18n.t('close')
             });
             if (!confirmed) return;
+            await clearClipboardBestEffort();
             clearTimeout(syncTimer);
             lastDecryptionId++;
             editor.value = '';
