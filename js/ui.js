@@ -453,6 +453,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const PROFILE_KDF_ITERATIONS = 600000;
 
     let profilesMasterKey = null;
+    let profilesMasterPassword = null;
 
     const createPasswordManagerUsernameInput = () => {
         const u = document.createElement('input');
@@ -539,6 +540,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                     throw new Error('Wrong master password');
                 }
                 profilesMasterKey = key;
+                profilesMasterPassword = masterPassword;
         return key;
     };
 
@@ -553,11 +555,13 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const check = await encryptStringWithKey(key, 'ok');
         localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(check));
         profilesMasterKey = key;
+        profilesMasterPassword = masterPassword;
         return key;
     };
 
     const lockProfilesMasterKey = () => {
         profilesMasterKey = null;
+        profilesMasterPassword = null;
     };
 
     const loadEncryptedProfiles = () => {
@@ -728,33 +732,46 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             return;
         }
 
-        const masterPassword = await promptDialog(i18n.t('profiles_restore_password'), {
-            placeholder: i18n.t('master_password'),
-            confirmText: i18n.t('profiles_restore'),
-            confirmClassName: 'btn-primary',
-            cancelText: i18n.t('close')
-        });
-        if (masterPassword === null) return;
-        if (!isKeyStrongEnoughToEncrypt(masterPassword)) {
-            flashStatus('weak_key');
+        let backupSaltBytes;
+        try {
+            backupSaltBytes = b64UrlDecodeToBytes(backup.salt);
+        } catch {
+            flashStatus('invalid_file');
             return;
         }
 
-        let key;
-        try {
-            key = await deriveProfilesMasterKey(masterPassword, b64UrlDecodeToBytes(backup.salt));
-        } catch {
-            flashStatus('operation_failed');
-            return;
+        const tryDecryptWithPassword = async (masterPassword) => {
+            try {
+                const key = await deriveProfilesMasterKey(masterPassword, backupSaltBytes);
+                const decrypted = await decryptStringWithKey(key, backup.data);
+                return { key, decrypted, masterPassword };
+            } catch {
+                return null;
+            }
+        };
+
+        let unlocked = null;
+        if (profilesMasterPassword) unlocked = await tryDecryptWithPassword(profilesMasterPassword);
+        if (!unlocked) {
+            const masterPassword = await promptDialog(i18n.t('profiles_restore_password'), {
+                placeholder: i18n.t('master_password'),
+                confirmText: i18n.t('profiles_restore'),
+                confirmClassName: 'btn-primary',
+                cancelText: i18n.t('close')
+            });
+            if (masterPassword === null) return;
+            if (!isKeyStrongEnoughToEncrypt(masterPassword)) {
+                flashStatus('weak_key');
+                return;
+            }
+            unlocked = await tryDecryptWithPassword(masterPassword);
+            if (!unlocked) {
+                flashStatus('wrong_master_password');
+                return;
+            }
         }
 
-        let decrypted;
-        try {
-            decrypted = await decryptStringWithKey(key, backup.data);
-        } catch {
-            flashStatus('wrong_master_password');
-            return;
-        }
+        const { key, decrypted, masterPassword } = unlocked;
 
         let parsed;
         try {
@@ -797,6 +814,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         }))));
 
         profilesMasterKey = key;
+        profilesMasterPassword = masterPassword;
         selectNoSecretsInUi();
         await renderProfiles();
         flashStatus('profiles_restore_done');
@@ -843,6 +861,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             backupBtn.type = 'button';
             backupBtn.className = 'unlock-profiles-lock-btn';
             backupBtn.innerText = i18n.t('profiles_backup');
+            backupBtn.disabled = profiles.length === 0;
             backupBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 try {
