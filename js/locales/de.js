@@ -6,7 +6,7 @@ window.SecrEditLocales.de = {
         "toggle_menu": "Menü umschalten",
         "username": "SecrEdit Benutzer",
         "key_placeholder": "Geheimer Schlüssel...",
-        "key_title": "Verschlüsselungspasswort",
+        "key_title": "Verschlüsselungsschlüssel",
         "show_hide_pass": "Passwort anzeigen/verbergen",
         "status_ready": "Bereit",
         "ready_encrypted": "Verschlüsselt",
@@ -28,7 +28,7 @@ window.SecrEditLocales.de = {
         "replace_current": "Ersetzen",
         "replace_all": "Alle",
         "close": "Schließen",
-        "editor_placeholder": "Willkommen bei SecrEdit.\n• Geben Sie Ihren Text hier ein; er wird in der URL komprimiert.\n• Sichern: Nutzen Sie 👤, um ein Verschlüsselungsprofil zu wählen.\n• Teilen: Klicken Sie auf 🔗, um den Link zu erstellen und zu teilen.\nIhre Daten werden nur im Link gespeichert, nicht auf einem Server.",
+        "editor_placeholder": "Willkommen bei SecrEdit.\n• Geben Sie Ihren Text hier ein; er wird in der URL komprimiert.\n• Sichern: Nutzen Sie 👤, um ein Verschlüsselungsprofil zu wählen.\n• Teilen: Klicken Sie auf 🔗, um den Link zu erstellen und zu teilen.\n\nTipp: Verwenden Sie den Inkognito-/Privatmodus für zusätzliche Privatsphäre.\nIhre Daten werden nur im Link gespeichert, nicht auf einem Server.",
         "weak_key": "Schwacher Schlüssel!",
         "unencrypted": "Unverschlüsselt",
         "secret_key_required": "Geheimer Schlüssel erforderlich",
@@ -55,7 +55,7 @@ window.SecrEditLocales.de = {
         "operation_failed": "Operation fehlgeschlagen",
         "invalid_request": "Ungültige Anfrage",
         "timeout": "Zeitüberschreitung",
-        "update_available": "Update verfügbar. Klicken zum Neu laden.",
+        "update_available": "Update verfügbar. Klicken zum Neuladen.",
         "profiles_btn": "Schlüsselprofile",
         "save_profile": "Als Profil speichern",
         "profile_name": "Profilname",
@@ -88,6 +88,6 @@ window.SecrEditLocales.de = {
         "file_too_large": "Datei ist zu groß (max. 5MB)",
         "decompression_limit": "Dekomprimierungslimit überschritten (Zip-Bomben-Schutz)",
         "wipe_app": "Löschen",
-        "wipe_confirmation": "Sind Sie sicher, dass Sie die Anwendung löschen möchten? Dies löscht alle Daten."
+        "wipe_confirmation": "Sind Sie sicher, dass Sie die Anwendung zurücksetzen möchten? Dabei werden alle Daten gelöscht."
     }
 };

@@ -6,7 +6,7 @@ window.SecrEditLocales.zh = {
         "toggle_menu": "切换菜单",
         "username": "SecrEdit 用户",
         "key_placeholder": "密钥...",
-        "key_title": "加密密码",
+        "key_title": "加密密钥",
         "show_hide_pass": "显示/隐藏密码",
         "status_ready": "就绪",
         "ready_encrypted": "已加密",
@@ -28,7 +28,7 @@ window.SecrEditLocales.zh = {
         "replace_current": "替换",
         "replace_all": "全部",
         "close": "关闭",
-        "editor_placeholder": "欢迎使用 SecrEdit。\n• 在此输入您的文本；它将被压缩到 URL 中。\n• 加密：使用 👤 选择加密配置文件。\n• 分享：点击 🔗 生成并分享链接。\n您的数据仅存储在链接中，不会上传到服务器。",
+        "editor_placeholder": "欢迎使用 SecrEdit。\n• 在此输入您的文本；它将被压缩到 URL 中。\n• 加密：使用 👤 选择加密配置文件。\n• 分享：点击 🔗 生成并分享链接。\n\n提示：使用无痕/隐私模式以获得额外的隐私保护。\n您的数据仅存储在链接中，不会上传到服务器。",
         "weak_key": "密钥太弱！",
         "unencrypted": "未加密",
         "secret_key_required": "需要密钥",
@@ -88,6 +88,6 @@ window.SecrEditLocales.zh = {
         "file_too_large": "文件太大 (最大 5MB)",
         "decompression_limit": "解压限制已超出 (Zip 炸弹保护)",
         "wipe_app": "清除",
-        "wipe_confirmation": "您确定要清除应用程序吗？这将清除所有数据。"
+        "wipe_confirmation": "您确定要清除应用程序数据吗？这将清除所有数据。"
     }
 };

@@ -6,7 +6,7 @@ window.SecrEditLocales.es = {
         "toggle_menu": "Alternar Menú",
         "username": "Usuario SecrEdit",
         "key_placeholder": "Clave secreta...",
-        "key_title": "Contraseña de cifrado",
+        "key_title": "Clave de cifrado",
         "show_hide_pass": "Mostrar/Ocultar contraseña",
         "status_ready": "Listo",
         "ready_encrypted": "Cifrado",
@@ -28,7 +28,7 @@ window.SecrEditLocales.es = {
         "replace_current": "Reemplazar",
         "replace_all": "Todo",
         "close": "Cerrar",
-        "editor_placeholder": "Bienvenido a SecrEdit.\n• Escribe tu texto aquí; se comprime dentro de la URL.\n• Protégelo: Usa 👤 para seleccionar un perfil de cifrado.\n• Compártelo: Haz clic en 🔗 para generar y compartir el enlace.\nTus datos se guardan solo en el enlace, no en un servidor.",
+        "editor_placeholder": "Bienvenido a SecrEdit.\n• Escribe tu texto aquí; se comprime dentro de la URL.\n• Protégelo: Usa 👤 para seleccionar un perfil de cifrado.\n• Compártelo: Haz clic en 🔗 para generar y compartir el enlace.\n\nConsejo: Usa el modo Incógnito/Privado para mayor privacidad.\nTus datos se guardan solo en el enlace, no en un servidor.",
         "weak_key": "¡Clave débil!",
         "unencrypted": "Sin cifrar",
         "secret_key_required": "Clave secreta requerida",
@@ -51,7 +51,7 @@ window.SecrEditLocales.es = {
         "no_content_to_share": "Sin contenido para compartir",
         "clear_confirm": "¿Borrar texto y comenzar nuevo documento?",
         "not_found": "No encontrado",
-        "replaced_all": "Reemplazado Todo",
+        "replaced_all": "Reemplazado todo",
         "operation_failed": "Operación fallida",
         "invalid_request": "Solicitud inválida",
         "timeout": "Tiempo de espera agotado",
@@ -73,7 +73,7 @@ window.SecrEditLocales.es = {
         "name_required": "Nombre requerido",
         "key_required": "Clave requerida",
         "profile_color": "Color del perfil",
-        "no_secrets": "Sin Secretos",
+        "no_secrets": "Sin secretos",
         "unlock_profiles": "Desbloquear perfiles",
         "profiles_unlocked": "Perfiles desbloqueados",
         "profiles_locked": "Perfiles bloqueados",
@@ -86,8 +86,8 @@ window.SecrEditLocales.es = {
         "wrong_master_password": "Contraseña maestra incorrecta",
         "master_password_set": "Contraseña maestra establecida",
         "file_too_large": "El archivo es demasiado grande (máx. 5MB)",
-        "decompression_limit": "Límite de descompresión excedido (protección zip bomb)",
+        "decompression_limit": "Límite de descompresión excedido (protección contra bomba zip)",
         "wipe_app": "Borrar",
-        "wipe_confirmation": "¿Estás seguro de que deseas borrar la aplicación? Esto borrará todos los datos."
+        "wipe_confirmation": "¿Estás seguro de que deseas borrar los datos de la aplicación? Esto borrará todos los datos."
     }
 };
