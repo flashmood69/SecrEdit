@@ -141,7 +141,17 @@ input#key-input:focus {
     border-color: rgba(255,255,255,0.4);
 }
 
-.sr-only { display: none; }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 #main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 #close-find-btn { background: transparent; color: var(--text); font-size: 18px; }
 

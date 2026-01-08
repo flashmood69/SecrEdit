@@ -1,4 +1,4 @@
-const CACHE_NAME = 'secredit-v8';
+const CACHE_NAME = 'secredit-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -11,17 +11,7 @@ const ASSETS = [
   './js/encoding.js',
   './js/crypto.js',
   './js/worker.js',
-  './js/locales/en.js',
-  './js/locales/es.js',
-  './js/locales/ar.js',
-  './js/locales/it.js',
-  './js/locales/fr.js',
-  './js/locales/de.js',
-  './js/locales/zh.js',
-  './js/locales/hi.js',
-  './js/locales/pt.js',
-  './js/locales/bn.js',
-  './js/locales/ru.js'
+  './js/locales/en.js'
 ];
 
 const shouldCacheResponse = (response) => response && response.ok && response.type === 'basic';

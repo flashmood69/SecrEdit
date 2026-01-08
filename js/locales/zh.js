@@ -73,7 +73,7 @@ window.SecrEditLocales.zh = {
         "name_required": "需要名称",
         "key_required": "需要密钥",
         "profile_color": "配置颜色",
-        "no_secrets": "没有秘密",
+        "no_secrets": "明文",
         "unlock_profiles": "解锁配置",
         "profiles_unlocked": "配置已解锁",
         "profiles_locked": "配置已锁定",

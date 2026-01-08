@@ -73,7 +73,7 @@ window.SecrEditLocales.hi = {
         "name_required": "नाम आवश्यक है",
         "key_required": "कुंजी आवश्यक है",
         "profile_color": "प्रोफ़ाइल रंग",
-        "no_secrets": "कोई रहस्य नहीं",
+        "no_secrets": "सादा पाठ",
         "unlock_profiles": "प्रोफ़ाइल अनलॉक करें",
         "profiles_unlocked": "प्रोफ़ाइल अनलॉक हो गए",
         "profiles_locked": "प्रोफ़ाइल लॉक हो गए",

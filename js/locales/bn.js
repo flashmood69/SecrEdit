@@ -73,7 +73,7 @@ window.SecrEditLocales.bn = {
         "name_required": "নাম প্রয়োজন",
         "key_required": "চাবিকাঠি প্রয়োজন",
         "profile_color": "প্রোফাইলের রঙ",
-        "no_secrets": "কোনো গোপনীয়তা নেই",
+        "no_secrets": "সাধারণ টেক্সট",
         "unlock_profiles": "প্রোফাইল আনলক করুন",
         "profiles_unlocked": "প্রোফাইল আনলক করা হয়েছে",
         "profiles_locked": "প্রোফাইল লক করা হয়েছে",

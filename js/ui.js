@@ -347,32 +347,53 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     window.addEventListener('load', async () => {
         await i18n.init();
 
-        const languages = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru'];
+        const languages = Array.isArray(i18n.supportedLangs) && i18n.supportedLangs.length
+            ? i18n.supportedLangs
+            : ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru'];
+
+        const langLabels = {
+            en: 'English',
+            es: 'Español',
+            ar: 'العربية',
+            it: 'Italiano',
+            fr: 'Français',
+            de: 'Deutsch',
+            zh: '中文 (简体)',
+            hi: 'हिन्दी',
+            pt: 'Português',
+            bn: 'বাংলা',
+            ru: 'Русский'
+        };
 
         if (langBtn && langPopover) {
             const updateLangBtn = (lang) => {
+                const label = langLabels[lang] || lang.toUpperCase();
                 const img = document.createElement('img');
                 img.src = `assets/flags/${lang}.svg`;
-                img.alt = lang;
+                img.alt = label;
                 img.className = 'flag-icon';
                 langBtn.replaceChildren(img);
+                langBtn.title = label;
+                langBtn.setAttribute('aria-label', label);
             };
             updateLangBtn(i18n.currentLang);
 
             const langFrag = document.createDocumentFragment();
             for (const lang of languages) {
+                const label = langLabels[lang] || lang.toUpperCase();
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'lang-item';
+                btn.title = label;
+                btn.setAttribute('aria-label', label);
                 const img = document.createElement('img');
                 img.src = `assets/flags/${lang}.svg`;
-                img.alt = lang;
+                img.alt = label;
                 img.className = 'flag-icon';
                 btn.appendChild(img);
-                btn.title = lang.toUpperCase();
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    i18n.changeLanguage(lang);
+                    await i18n.changeLanguage(lang);
                     updateLangBtn(lang);
                     updateCounts();
                     updateStrengthMeter(keyInput, strengthBar);
@@ -425,6 +446,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         btn.type = 'button';
         btn.className = 'emoji-item';
         btn.innerText = emoji;
+        btn.setAttribute('aria-label', `${i18n.t('emoji_btn')}: ${emoji}`);
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             insertAtSelection(emoji);
@@ -471,10 +493,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         return u;
     };
 
-    const deriveProfilesMasterKey = async (masterPassword, salt) => {
+    const deriveProfilesMasterKey = async (masterPassword, salt, iterations = PROFILE_KDF_ITERATIONS) => {
+        const safeIterations = Number.isFinite(iterations) && iterations > 0 ? Math.floor(iterations) : PROFILE_KDF_ITERATIONS;
         const material = await crypto.subtle.importKey('raw', utf8Encode(masterPassword), 'PBKDF2', false, ['deriveKey']);
         return crypto.subtle.deriveKey(
-            { name: 'PBKDF2', salt, iterations: PROFILE_KDF_ITERATIONS, hash: 'SHA-256' },
+            { name: 'PBKDF2', salt, iterations: safeIterations, hash: 'SHA-256' },
             material,
             { name: 'AES-GCM', length: 256 },
             false,
@@ -740,9 +763,13 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             return;
         }
 
+        const backupIterations = backup && backup.kdf && typeof backup.kdf.iterations === 'number'
+            ? backup.kdf.iterations
+            : PROFILE_KDF_ITERATIONS;
+
         const tryDecryptWithPassword = async (masterPassword) => {
             try {
-                const key = await deriveProfilesMasterKey(masterPassword, backupSaltBytes);
+                const key = await deriveProfilesMasterKey(masterPassword, backupSaltBytes, backupIterations);
                 const decrypted = await decryptStringWithKey(key, backup.data);
                 return { key, decrypted, masterPassword };
             } catch {
@@ -805,15 +832,17 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             restored.push({ name, color, pass });
         }
 
-        localStorage.setItem(ENCRYPTED_PROFILES_SALT_KEY, backup.salt);
-        localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(await encryptStringWithKey(key, 'ok')));
+        const nextSalt = crypto.getRandomValues(new Uint8Array(16));
+        localStorage.setItem(ENCRYPTED_PROFILES_SALT_KEY, b64UrlEncodeBytes(nextSalt));
+        const nextKey = await deriveProfilesMasterKey(masterPassword, nextSalt, PROFILE_KDF_ITERATIONS);
+        localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(await encryptStringWithKey(nextKey, 'ok')));
         saveEncryptedProfiles(await Promise.all(restored.map(async (p) => ({
             name: p.name,
             color: p.color,
-            passEnc: await encryptStringWithKey(key, p.pass)
+            passEnc: await encryptStringWithKey(nextKey, p.pass)
         }))));
 
-        profilesMasterKey = key;
+        profilesMasterKey = nextKey;
         profilesMasterPassword = masterPassword;
         selectNoSecretsInUi();
         await renderProfiles();
@@ -845,6 +874,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         lockBtn.type = 'button';
         lockBtn.className = 'unlock-profiles-lock-btn';
         lockBtn.innerText = i18n.t('lock_profiles');
+        lockBtn.setAttribute('aria-label', i18n.t('lock_profiles'));
         lockBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             lockProfilesMasterKey();
@@ -861,6 +891,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             backupBtn.type = 'button';
             backupBtn.className = 'unlock-profiles-lock-btn';
             backupBtn.innerText = i18n.t('profiles_backup');
+            backupBtn.setAttribute('aria-label', i18n.t('profiles_backup'));
             backupBtn.disabled = profiles.length === 0;
             backupBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -876,6 +907,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             restoreBtn.type = 'button';
             restoreBtn.className = 'unlock-profiles-lock-btn';
             restoreBtn.innerText = i18n.t('profiles_restore');
+            restoreBtn.setAttribute('aria-label', i18n.t('profiles_restore'));
             restoreBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 try {
@@ -931,6 +963,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             const mpToggle = document.createElement('button');
             mpToggle.type = 'button';
             mpToggle.appendChild(ICON_VISIBLE());
+            mpToggle.title = i18n.t('show_hide_pass');
+            mpToggle.setAttribute('aria-label', i18n.t('show_hide_pass'));
             mpToggle.style.position = 'absolute';
             if (isRtl) mpToggle.style.left = '5px';
             else mpToggle.style.right = '5px';
@@ -954,6 +988,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             unlockBtn.type = 'button';
             unlockBtn.className = 'unlock-profiles-btn';
             unlockBtn.innerText = i18n.t('unlock');
+            unlockBtn.setAttribute('aria-label', i18n.t('unlock'));
 
             const handleUnlock = async (e) => {
                 if (e) e.stopPropagation();
@@ -1025,6 +1060,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             const mpToggle = document.createElement('button');
             mpToggle.type = 'button';
             mpToggle.appendChild(ICON_VISIBLE());
+            mpToggle.title = i18n.t('show_hide_pass');
+            mpToggle.setAttribute('aria-label', i18n.t('show_hide_pass'));
             mpToggle.style.position = 'absolute';
             if (isRtl) mpToggle.style.left = '5px';
             else mpToggle.style.right = '5px';
@@ -1048,6 +1085,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             setBtn.type = 'button';
             setBtn.className = 'unlock-profiles-btn';
             setBtn.innerText = i18n.t('set_password');
+            setBtn.setAttribute('aria-label', i18n.t('set_password'));
 
             const handleSet = async (e) => {
                 if (e) e.stopPropagation();
@@ -1135,6 +1173,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const toggleBtn = document.createElement('button');
         toggleBtn.type = 'button';
         toggleBtn.appendChild(ICON_VISIBLE());
+        toggleBtn.title = i18n.t('show_hide_pass');
+        toggleBtn.setAttribute('aria-label', i18n.t('show_hide_pass'));
         toggleBtn.style.position = 'absolute';
         if (isRtl) toggleBtn.style.left = '5px';
         else toggleBtn.style.right = '5px';
@@ -1194,6 +1234,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         saveBtn.className = 'unlock-profiles-btn';
         saveBtn.innerText = i18n.t('save_profile');
         saveBtn.type = 'button';
+        saveBtn.setAttribute('aria-label', i18n.t('save_profile'));
         saveBtn.style.width = '100%';
         saveBtn.style.padding = '8px';
         
@@ -1344,6 +1385,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 delBtn.className = 'delete-profile';
                 delBtn.innerText = '✕';
                 delBtn.title = i18n.t('delete_profile');
+                delBtn.setAttribute('aria-label', `${i18n.t('delete_profile')}: ${p.name}`);
                 delBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const current = await loadProfiles();

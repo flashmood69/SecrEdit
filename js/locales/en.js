@@ -73,7 +73,7 @@ window.SecrEditLocales.en = {
         "name_required": "Name required",
         "key_required": "Key required",
         "profile_color": "Profile Color",
-        "no_secrets": "No Secrets",
+        "no_secrets": "Plaintext",
         "unlock_profiles": "Unlock Profiles",
         "profiles_unlocked": "Profiles unlocked",
         "profiles_locked": "Profiles locked",

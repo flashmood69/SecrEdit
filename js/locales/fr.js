@@ -73,7 +73,7 @@ window.SecrEditLocales.fr = {
         "name_required": "Nom requis",
         "key_required": "Clé requise",
         "profile_color": "Couleur du profil",
-        "no_secrets": "Aucun secret",
+        "no_secrets": "Texte en clair",
         "unlock_profiles": "Déverrouiller les profils",
         "profiles_unlocked": "Profils déverrouillés",
         "profiles_locked": "Profils verrouillés",

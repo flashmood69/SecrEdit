@@ -1,19 +1,18 @@
 class I18nManager {
     constructor() {
         this.currentLang = 'en';
-        this.supportedLangs = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru']; // Should match loaded files
+        this.supportedLangs = ['en', 'es', 'ar', 'it', 'fr', 'de', 'zh', 'hi', 'pt', 'bn', 'ru'];
         this.resources = window.SecrEditLocales || {};
         this.observers = [];
+        this._pendingLocaleLoads = new Map();
     }
 
     async init() {
-        // Wait for locales to be loaded if they are async (scripts at bottom of body)
-        // In our case, we will include scripts before this runs or ensure they are present.
         this.resources = window.SecrEditLocales || {};
-        
+
         const savedLang = localStorage.getItem('secredit_lang');
         const browserLangs = navigator.languages || [navigator.language];
-        
+
         let detectedLang = 'en';
         
         // 1. Check saved preference
@@ -34,21 +33,56 @@ class I18nManager {
     }
 
     isSupported(lang) {
-        return !!this.resources[lang];
+        return this.supportedLangs.includes(lang);
+    }
+
+    async _loadLocale(lang) {
+        if (!this.isSupported(lang)) return false;
+        if (!window.SecrEditLocales) window.SecrEditLocales = {};
+        if (window.SecrEditLocales[lang]) {
+            this.resources = window.SecrEditLocales;
+            return true;
+        }
+        if (this._pendingLocaleLoads.has(lang)) return this._pendingLocaleLoads.get(lang);
+
+        const promise = new Promise((resolve) => {
+            const existing = document.querySelector(`script[data-secredit-locale="${lang}"]`);
+            if (existing) {
+                existing.addEventListener('load', () => resolve(Boolean(window.SecrEditLocales && window.SecrEditLocales[lang])), { once: true });
+                existing.addEventListener('error', () => resolve(false), { once: true });
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = `js/locales/${lang}.js`;
+            script.async = true;
+            script.dataset.secreditLocale = lang;
+            script.onload = () => resolve(Boolean(window.SecrEditLocales && window.SecrEditLocales[lang]));
+            script.onerror = () => resolve(false);
+            document.head.appendChild(script);
+        });
+
+        this._pendingLocaleLoads.set(lang, promise);
+        const ok = await promise;
+        this._pendingLocaleLoads.delete(lang);
+        this.resources = window.SecrEditLocales || {};
+        return ok;
     }
 
     async changeLanguage(lang) {
-        if (!this.isSupported(lang)) {
-            console.warn(`Language ${lang} not supported, falling back to en`);
+        if (!this.isSupported(lang)) lang = 'en';
+        const ok = await this._loadLocale(lang);
+        if (!ok && lang !== 'en') {
             lang = 'en';
+            await this._loadLocale('en');
         }
 
         this.currentLang = lang;
         localStorage.setItem('secredit_lang', lang);
-        
+
         this.updatePage();
         this.updateDir();
-        
+
         // Notify listeners (if any)
         this.observers.forEach(cb => cb(lang));
     }

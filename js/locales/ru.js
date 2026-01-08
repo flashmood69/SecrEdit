@@ -73,7 +73,7 @@ window.SecrEditLocales.ru = {
         "name_required": "Требуется имя",
         "key_required": "Требуется ключ",
         "profile_color": "Цвет профиля",
-        "no_secrets": "Нет секретов",
+        "no_secrets": "Открытый текст",
         "unlock_profiles": "Разблокировать профили",
         "profiles_unlocked": "Профили разблокированы",
         "profiles_locked": "Профили заблокированы",

@@ -73,7 +73,7 @@ window.SecrEditLocales.ar = {
         "name_required": "الاسم مطلوب",
         "key_required": "المفتاح مطلوب",
         "profile_color": "لون الملف التعريفي",
-        "no_secrets": "بدون أسرار",
+        "no_secrets": "نص صريح",
         "unlock_profiles": "فك قفل ملفات التعريف",
         "profiles_unlocked": "تم فك قفل ملفات التعريف",
         "profiles_locked": "ملفات التعريف مقفلة",

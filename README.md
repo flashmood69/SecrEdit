@@ -1,84 +1,48 @@
-# SecrEdit - Secure URL Editor
+# SecrEdit
 
-SecrEdit is a privacy-focused, client-side text editor that stores everything in the URL. It allows you to write and share encrypted notes (or plaintext notes via the "No Secrets" profile) without any server-side storage.
+<img src="assets/icon.svg" alt="SecrEdit logo" width="48" height="48">
 
-![SecrEdit Icon](assets/icon.svg)
+A client-side text editor that stores your note in the URL fragment. Notes can be encrypted in-browser (no server storage) or kept as compressed plaintext using the built-in “Plaintext” profile.
 
-## ✨ Features
+## Features
 
-- **End-to-End Encryption**: All encryption and decryption happen in your browser. Your secret key never leaves your device.
-- **URL-Based Storage**: The content is stored entirely in the URL fragment (hash), making it easy to bookmark or share.
-- **Compression**: Uses Gzip compression to maximize the amount of text you can store in a URL.
-- **Progressive Web App (PWA)**: Installable on mobile and desktop for offline use.
-- **Multilingual Support**: Available in 11 languages including English, Spanish, Arabic, Italian, French, German, Chinese, Hindi, Portuguese, Russian, and Bengali.
-- **Key Profiles**: Save multiple key profiles (with colors) and quickly switch between them.
-- **Master Password**: Secure your saved profiles with a master password for extra privacy.
-- **Plaintext Mode**: Use the built-in "No Secrets" profile to store plaintext (still compressed) in the URL.
-- **File Support**: Export and import notes as `.secredit` files (encrypted or plaintext depending on profile).
-- **Find & Replace**: Integrated search and replace functionality.
-- **Emoji Picker**: Quick access to emojis for your notes.
-- **Dark Mode**: Automatic dark mode support based on system preferences.
-- **Password Strength Meter**: Visual feedback on the strength of your secret key.
+- Encrypt/decrypt locally in the browser (Web Crypto API)
+- URL-fragment storage for easy sharing/bookmarking
+- Gzip compression to fit more text into a URL
+- Profiles: save multiple keys (with colors) and switch quickly
+- Optional master password to protect saved profiles in localStorage
+- Import/export `.secredit` files
+- Find/replace, emoji picker, dark mode
+- 11 languages (locale files load on demand)
 
-## 🔒 Security
+## Security Notes
 
-SecrEdit uses industry-standard cryptographic primitives provided by the Web Crypto API:
+- Encryption: AES-GCM (256-bit)
+- Key derivation: PBKDF2 (SHA-256) with 600,000 iterations
+- Master password: also uses PBKDF2 with a high iteration count to encrypt saved profile keys
+- DoS protections: import size limit (5MB) and decompression limit (10MB)
 
-- **Algorithm**: AES-GCM (256-bit) for authenticated encryption.
-- **Key Derivation**: PBKDF2 with SHA-256 and 600,000 iterations to derive the encryption key from your password.
-- **Profile Protection**: If a master password is set, your saved profile keys are encrypted using AES-GCM before being stored in local storage.
-- **Privacy**: No tracking, no cookies, and no server-side backend. Your data is yours.
-- **DoS Protection**: Import file size limits (5MB) and decompression limits (10MB) to prevent memory exhaustion attacks.
-- **Security Headers**: Includes configuration for strict Content Security Policy (CSP), HSTS, and other security headers for production deployments.
+## Run Locally
 
-## 🛠️ Technology Stack
+Serve the folder and open the site:
 
-- **Frontend**: Vanilla HTML5, CSS3, and JavaScript.
-- **Cryptography**: [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
-- **Compression**: [Compression Stream API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Stream_API).
-- **Concurrency**: Web Workers for background crypto operations to keep the UI responsive.
-- **Offline Support**: Service Workers and PWA manifest.
+```bash
+python -m http.server 8000
+```
 
-## 🚀 Getting Started
+Then visit http://localhost:8000/
 
-### Prerequisites
+## Usage
 
-A modern web browser that supports the Web Crypto API and Compression Stream API (Chrome 80+, Firefox 113+, Safari 16.4+).
+1. Pick a profile (choose “Plaintext” for unencrypted mode).
+2. Type your note; the URL updates automatically.
+3. Share/bookmark the URL, or export/import a `.secredit` file.
+4. If you open a link referencing a missing profile, SecrEdit prompts you to create it.
 
-### Running Locally
+## Credits
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/flashmood69/SecrEdit.git
-   ```
-   
-2. Open `index.html` in your browser or serve it using a local web server:
-   ```bash
-   # Using Python
-   python -m http.server 8000
-   ```
+- Flag icons: https://flagpedia.net (served via flagcdn.com)
 
-## 📖 How to Use
+## License
 
-1. **Pick a Profile**: Open the profiles menu and select a saved profile (or "No Secrets" for plaintext).
-2. **Enter the Key (if needed)**: If you selected an encrypted profile, enter a strong password.
-3. **Write Your Note**: Type your content in the editor. The URL updates automatically.
-4. **Save/Share**: Bookmark or share the URL. The URL includes the profile name so SecrEdit can auto-select it when opened.
-5. **Export/Import**: Export a `.secredit` file for sharing or backup, and import it later to restore the note.
-6. **Missing profile flow**: If you open a URL/file referencing a profile you don't have, SecrEdit opens the profile manager with the name pre-filled so you can create it by entering the password.
-
-## 🔑 Profiles
-
-- The profile name is stored in the URL fragment, so opening a link can automatically select the right profile.
-- **Security**: You can set a Master Password to encrypt all your saved profiles. This ensures that even if someone has access to your browser's local storage, they cannot see your secret keys without the master password.
-- The built-in "No Secrets" profile always stores plaintext (compressed) and requires no password.
-- Profile colors can be changed from the profile manager list.
-- Duplicate profile names are prevented (saving an existing name updates it instead of creating another entry).
-
-## 🤝 Credits
-
-- **Flag Icons**: Provided by [Flagpedia.net](https://flagpedia.net) via [Flagcdn.com](https://flagcdn.com).
-
-## 📄 License
-
-This is free and unencumbered software released into the public domain. For more information, please refer to the [LICENSE](LICENSE) file or [unlicense.org](https://unlicense.org/).
+Public domain. See [LICENSE](LICENSE).
