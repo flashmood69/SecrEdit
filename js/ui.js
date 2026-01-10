@@ -1,4 +1,5 @@
 import { PLAINTEXT_PREFIX, b64UrlDecodeToBytes, b64UrlEncodeBytes, gzipBytes, utf8Decode, utf8Encode } from './encoding.js';
+import { initAntiPhishing } from './antiphishing.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -44,6 +45,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const copySecretBtn = $('copySecretBtn');
     const clearBtn = $('clearBtn');
     const wipeBtn = $('wipeBtn');
+
+    const antiPhishing = initAntiPhishing();
 
     const SYNC_DEBOUNCE_MS = 500;
     const PROFILE_PREFIX = 'pr:';
@@ -346,6 +349,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
     window.addEventListener('load', async () => {
         await i18n.init();
+        antiPhishing.setI18n(i18n);
+        antiPhishing.refresh();
 
         const languages = Array.isArray(i18n.supportedLangs) && i18n.supportedLangs.length
             ? i18n.supportedLangs

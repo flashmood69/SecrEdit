@@ -1,4 +1,4 @@
-const CACHE_NAME = 'secredit-v9';
+const CACHE_NAME = 'secredit-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './js/i18n.js',
   './js/main.js',
   './js/ui.js',
+  './js/antiphishing.js',
   './js/encoding.js',
   './js/crypto.js',
   './js/worker.js',

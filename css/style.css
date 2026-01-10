@@ -19,7 +19,7 @@ header { display: flex; flex-direction: column; padding: 10px 20px; background: 
 }
 .status-left { display: flex; justify-content: flex-start; align-items: center; overflow: hidden; }
 .status-center { display: flex; justify-content: center; align-items: center; gap: 15px; flex-shrink: 0; }
-.status-right { display: flex; justify-content: flex-end; align-items: center; overflow: hidden; }
+.status-right { display: flex; justify-content: flex-end; align-items: center; overflow: hidden; gap: 10px; }
 
 #footer {
     padding: 8px 20px;
@@ -107,6 +107,25 @@ button:active { transform: scale(0.95); }
 }
 #status {
     display: none;
+}
+
+#trust-status {
+    opacity: 0.85;
+    max-width: 45vw;
+}
+
+#trust-status.trust-verified,
+#trust-status.trust-local {
+    color: rgba(255,255,255,0.9);
+}
+
+#trust-status.trust-unverified,
+#trust-status.trust-suspicious {
+    color: rgba(255,221,225,0.95);
+}
+
+#trust-status.trust-flash {
+    opacity: 1;
 }
 .char-count { opacity: 0.7; }
 .input-wrapper { position: relative; display: flex; align-items: center; }
