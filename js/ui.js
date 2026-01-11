@@ -77,20 +77,36 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         return profileNameEl.innerText.trim() || 'profile';
     };
 
+    const parsePayloadParams = (rawPayload) => {
+        if (typeof rawPayload !== 'string' || !rawPayload) return { payload: '', kdfId: null };
+        const ampIdx = rawPayload.indexOf('&');
+        if (ampIdx === -1) return { payload: rawPayload, kdfId: null };
+        const payload = rawPayload.slice(0, ampIdx);
+        const paramsRaw = rawPayload.slice(ampIdx + 1).replace(/^\?/, '');
+        if (!paramsRaw) return { payload, kdfId: null };
+        const params = new URLSearchParams(paramsRaw);
+        const kdfStr = params.get('kdf');
+        const kdfId = kdfStr ? Number(kdfStr) : NaN;
+        return { payload, kdfId: Number.isInteger(kdfId) ? kdfId : null };
+    };
+
     const parseHashWithProfile = (raw) => {
-        if (typeof raw !== 'string' || !raw) return { payload: '', profileName: null };
-        if (!raw.startsWith(PROFILE_PREFIX)) return { payload: raw, profileName: null };
+        if (typeof raw !== 'string' || !raw) return { payload: '', profileName: null, kdfId: null };
+        if (!raw.startsWith(PROFILE_PREFIX)) {
+            const { payload, kdfId } = parsePayloadParams(raw);
+            return { payload, profileName: null, kdfId };
+        }
         const rest = raw.slice(PROFILE_PREFIX.length);
         const idx = rest.indexOf(':');
-        if (idx === -1) return { payload: raw, profileName: null };
+        if (idx === -1) return { payload: raw, profileName: null, kdfId: null };
         const profileEncoded = rest.slice(0, idx);
-        const payload = rest.slice(idx + 1);
-        if (!profileEncoded || !payload) return { payload, profileName: null };
-        if (profileEncoded.length > MAX_PROFILE_NAME_ENCODED_CHARS) return { payload, profileName: null };
+        const { payload, kdfId } = parsePayloadParams(rest.slice(idx + 1));
+        if (!profileEncoded || !payload) return { payload, profileName: null, kdfId };
+        if (profileEncoded.length > MAX_PROFILE_NAME_ENCODED_CHARS) return { payload, profileName: null, kdfId };
         try {
-            return { payload, profileName: decodeProfileName(profileEncoded) };
+            return { payload, profileName: decodeProfileName(profileEncoded), kdfId };
         } catch {
-            return { payload, profileName: null };
+            return { payload, profileName: null, kdfId };
         }
     };
 
@@ -254,10 +270,11 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         setStatus('encrypting');
         try {
-            const encrypted = await encrypt({ text, password: key });
+            const kdfId = DEFAULT_KDF_ID;
+            const encrypted = await encrypt({ text, password: key, kdf: kdfId });
             if (!encrypted) throw new Error('No result');
             const selectedProfileName = getSelectedProfileName();
-            const payload = `${PROFILE_PREFIX}${encodeProfileName(selectedProfileName)}:${encrypted}`;
+            const payload = `${PROFILE_PREFIX}${encodeProfileName(selectedProfileName)}:${encrypted}&kdf=${kdfId}`;
             history.replaceState(null, '', `#${payload}`);
             updateCounts();
             setStatus('synced_encrypted');
@@ -271,6 +288,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const maxEncodedChars = typeof opts.maxEncodedChars === 'number' ? opts.maxEncodedChars : MAX_HASH_ENCODED_PAYLOAD_CHARS;
         const invalidStatusKey = typeof opts.invalidStatusKey === 'string' ? opts.invalidStatusKey : 'invalid_data';
+        const kdfId = Number.isInteger(opts.kdfId) ? opts.kdfId : null;
         if (!isEncodedPayloadWithinLimit(data, maxEncodedChars)) {
             setStatus(invalidStatusKey);
             return false;
@@ -313,7 +331,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         setStatus('decrypting');
         try {
             if (currentId !== lastDecryptionId) return false;
-            const dec = await decrypt({ payload: data, password: password || '' });
+            const dec = await decrypt({ payload: data, password: password || '', kdf: kdfId });
             if (currentId !== lastDecryptionId) return false;
             editor.value = dec;
             setStatus('decrypted');
@@ -430,7 +448,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const raw = location.hash.substring(1);
         if (raw) {
-            const { payload, profileName } = parseHashWithProfile(raw);
+            const { payload, profileName, kdfId } = parseHashWithProfile(raw);
             if (!isEncodedPayloadWithinLimit(payload, MAX_HASH_ENCODED_PAYLOAD_CHARS)) {
                 setStatus('invalid_data');
                 return;
@@ -439,7 +457,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 const ok = await ensureProfileAvailable(profileName);
                 if (!ok) return;
             }
-            await performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
+            await performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data', kdfId });
             return;
         }
     });
@@ -1338,8 +1356,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         defaultItem.addEventListener('click', (e) => {
             e.stopPropagation();
             selectNoSecretsInUi();
-            const { payload } = parseHashWithProfile(location.hash.substring(1));
-            if (payload && !editor.value) performDecryption(payload, '', { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
+            const { payload, kdfId } = parseHashWithProfile(location.hash.substring(1));
+            if (payload && !editor.value) performDecryption(payload, '', { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data', kdfId });
             else if (editor.value) scheduleSync();
             profilePopover.classList.remove('show');
         });
@@ -1416,8 +1434,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                         return;
                     }
                     await selectProfileInUi(p);
-                    const { payload } = parseHashWithProfile(location.hash.substring(1));
-                    if (payload && !editor.value) performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data' });
+                    const { payload, kdfId } = parseHashWithProfile(location.hash.substring(1));
+                    if (payload && !editor.value) performDecryption(payload, keyInput.value, { maxEncodedChars: MAX_HASH_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_data', kdfId });
                     else if (editor.value) scheduleSync();
                     profilePopover.classList.remove('show');
                 });
@@ -1538,18 +1556,20 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         exportBtn.addEventListener('click', async () => {
             if (!editor.value) return alert(i18n.t('nothing_to_export'));
             let data;
+            const isEncrypted = isNonEmptyKey(keyInput.value);
+            const kdfId = DEFAULT_KDF_ID;
             try {
-                if (!isNonEmptyKey(keyInput.value)) {
+                if (!isEncrypted) {
                     data = await encodePlaintextPayload(editor.value);
                 } else {
                     if (!isKeyStrongEnoughToEncrypt(keyInput.value)) return alert(i18n.t('export_key_required'));
-                    data = await encrypt({ text: editor.value, password: keyInput.value });
+                    data = await encrypt({ text: editor.value, password: keyInput.value, kdf: kdfId });
                 }
             } catch {
                 return alert(i18n.t('operation_failed'));
             }
             const selectedProfileName = getSelectedProfileName();
-            const payload = { data, savedTextFileFormatVersion: 1, profile: encodeProfileName(selectedProfileName) };
+            const payload = { data, savedTextFileFormatVersion: 1, profile: encodeProfileName(selectedProfileName), kdf: isEncrypted ? kdfId : undefined };
             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -1589,7 +1609,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                         setStatus('invalid_file');
                         return;
                     }
-                    const { data, profile, savedTextFileFormatVersion } = parsed || {};
+                    const { data, profile, savedTextFileFormatVersion, kdf } = parsed || {};
                     if (savedTextFileFormatVersion !== 1) {
                         setStatus('invalid_file');
                         return;
@@ -1599,6 +1619,13 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                         return;
                     }
                     if (!isEncodedPayloadWithinLimit(data, MAX_IMPORTED_ENCODED_PAYLOAD_CHARS)) {
+                        setStatus('invalid_file');
+                        return;
+                    }
+                    const kdfId = (kdf === undefined || kdf === null)
+                        ? DEFAULT_KDF_ID
+                        : (Number.isInteger(kdf) && KDF_CONFIGS[kdf] ? kdf : null);
+                    if (!kdfId) {
                         setStatus('invalid_file');
                         return;
                     }
@@ -1612,7 +1639,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                             if (!ok) return;
                         }
                     }
-                    await performDecryption(data, keyInput.value, { maxEncodedChars: MAX_IMPORTED_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_file' });
+                    await performDecryption(data, keyInput.value, { maxEncodedChars: MAX_IMPORTED_ENCODED_PAYLOAD_CHARS, invalidStatusKey: 'invalid_file', kdfId });
                 };
                 reader.readAsText(file);
             };

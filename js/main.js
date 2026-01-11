@@ -64,8 +64,8 @@ const callWorker = (msg) => new Promise((resolve, reject) => {
 
 initWorker();
 
-const encrypt = ({ text, password }) => callWorker({ type: 'encrypt', text, password });
-const decrypt = ({ payload, password }) => callWorker({ type: 'decrypt', payload, password });
+const encrypt = ({ text, password, kdf }) => callWorker({ type: 'encrypt', text, password, kdf });
+const decrypt = ({ payload, password, kdf }) => callWorker({ type: 'decrypt', payload, password, kdf });
 
 const i18n = window.I18n;
 startUi({ i18n, encrypt, decrypt, decodePlaintextFromHash });

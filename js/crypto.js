@@ -34,16 +34,37 @@ export const encryptText = async ({ text, password, kdf = DEFAULT_KDF_ID }) => {
     packed.set(salt, 0);
     packed.set(iv, 16);
     packed.set(new Uint8Array(encrypted), 28);
-    return `${kdfId}.${b64UrlEncodeBytes(packed)}`;
+    return b64UrlEncodeBytes(packed);
 };
 
-export const decryptPayloadToText = async ({ payload, password }) => {
-    const dotIdx = typeof payload === 'string' ? payload.indexOf('.') : -1;
-    const kdfStr = dotIdx === -1 ? '' : payload.slice(0, dotIdx);
-    const body = dotIdx === -1 ? payload : payload.slice(dotIdx + 1);
+export const decryptPayloadToText = async ({ payload, password, kdf = null }) => {
+    let body = payload;
+    let kdfId = Number.isInteger(kdf) ? kdf : null;
+
+    if (!kdfId && typeof payload === 'string') {
+        const dotIdx = payload.indexOf('.');
+        if (dotIdx !== -1) {
+            const maybeKdfId = Number(payload.slice(0, dotIdx));
+            const maybeBody = payload.slice(dotIdx + 1);
+            if (Number.isInteger(maybeKdfId) && maybeBody) {
+                kdfId = maybeKdfId;
+                body = maybeBody;
+            }
+        }
+    }
+
+    if (!kdfId) kdfId = DEFAULT_KDF_ID;
+    if (typeof body === 'string') {
+        const dotIdx = body.indexOf('.');
+        if (dotIdx !== -1) {
+            const maybeKdfId = Number(body.slice(0, dotIdx));
+            const maybeBody = body.slice(dotIdx + 1);
+            if (Number.isInteger(maybeKdfId) && maybeBody && maybeKdfId === kdfId) {
+                body = maybeBody;
+            }
+        }
+    }
     if (!body) throw new Error('invalid_data');
-    const kdfId = dotIdx === -1 ? DEFAULT_KDF_ID : Number(kdfStr);
-    if (!Number.isInteger(kdfId)) throw new Error('invalid_data');
 
     const buf = b64UrlDecodeToBytes(body);
     if (buf.length < 28) throw new Error('invalid_data');
