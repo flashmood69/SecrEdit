@@ -12,7 +12,12 @@ self.onmessage = async ({ data }) => {
             return;
         }
         throw new Error('Invalid request');
-    } catch {
+    } catch (err) {
+        const msg = err && typeof err === 'object' && typeof err.message === 'string' ? err.message : '';
+        if (msg === 'invalid_data' || msg === 'Decompression limit exceeded') {
+            self.postMessage({ id, error: msg });
+            return;
+        }
         self.postMessage({ id, error: 'Operation failed' });
     }
 };

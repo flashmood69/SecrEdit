@@ -1,5 +1,6 @@
 import { PLAINTEXT_PREFIX, b64UrlDecodeToBytes, b64UrlEncodeBytes, gzipBytes, utf8Decode, utf8Encode } from './encoding.js';
 import { initAntiPhishing } from './antiphishing.js';
+import { DEFAULT_KDF_ID, KDF_CONFIGS } from './crypto.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,7 +29,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const profileNameEl = $('profile-name');
     const charCount = $('char-count');
     const urlCount = $('url-count');
-    let keyInput = document.createElement('input'); // Virtual input since it's now in the popover
+    let keyInput = document.createElement('input');
     keyInput.type = 'password';
     let strengthBar = document.createElement('div');
     const emojiBtn = $('emoji-btn');
@@ -324,6 +325,10 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 setStatus('decompression_limit');
                 return false;
             }
+            if (e === 'invalid_data' || (e.message && e.message === 'invalid_data')) {
+                setStatus(invalidStatusKey);
+                return false;
+            }
         }
 
         if (currentId === lastDecryptionId) setStatus('wrong_key');
@@ -477,7 +482,6 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
     const ENCRYPTED_PROFILES_KEY = 'secredit_profiles_enc';
     const ENCRYPTED_PROFILES_SALT_KEY = 'secredit_profiles_enc_salt';
     const ENCRYPTED_PROFILES_CHECK_KEY = 'secredit_profiles_enc_check';
-    const PROFILE_KDF_ITERATIONS = 600000;
 
     let profilesMasterKey = null;
     let profilesMasterPassword = null;
@@ -498,11 +502,15 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         return u;
     };
 
-    const deriveProfilesMasterKey = async (masterPassword, salt, iterations = PROFILE_KDF_ITERATIONS) => {
-        const safeIterations = Number.isFinite(iterations) && iterations > 0 ? Math.floor(iterations) : PROFILE_KDF_ITERATIONS;
+    const deriveProfilesMasterKey = async (masterPassword, salt, kdfId = DEFAULT_KDF_ID) => {
+        const cfg = kdfId && Number.isInteger(kdfId) ? KDF_CONFIGS[kdfId] : null;
+        if (!cfg) throw new Error('Invalid data');
+        const MAX_ITERATIONS = 2_000_000;
+        const safeIterationsRaw = Number.isFinite(cfg.iterations) && cfg.iterations > 0 ? Math.floor(cfg.iterations) : 1;
+        const safeIterations = Math.max(1, Math.min(MAX_ITERATIONS, safeIterationsRaw));
         const material = await crypto.subtle.importKey('raw', utf8Encode(masterPassword), 'PBKDF2', false, ['deriveKey']);
         return crypto.subtle.deriveKey(
-            { name: 'PBKDF2', salt, iterations: safeIterations, hash: 'SHA-256' },
+            { name: 'PBKDF2', salt, iterations: safeIterations, hash: cfg.hash },
             material,
             { name: 'AES-GCM', length: 256 },
             false,
@@ -707,8 +715,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
         const saltBytes = loadProfilesSalt() || getOrCreateProfilesSalt();
         const backup = {
             kind: 'profiles_backup',
-            formatVersion: 1,
-            kdf: { iterations: PROFILE_KDF_ITERATIONS, hash: 'SHA-256' },
+            profilesBackupFormatVersion: 1,
+            kdf: DEFAULT_KDF_ID,
             salt: b64UrlEncodeBytes(saltBytes),
             data: await encryptStringWithKey(profilesMasterKey, JSON.stringify({ profiles: plainProfiles }))
         };
@@ -751,11 +759,16 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             return;
         }
 
-        if (!backup || typeof backup !== 'object' || backup.kind !== 'profiles_backup' || backup.formatVersion !== 1) {
+        if (!backup || typeof backup !== 'object' || backup.kind !== 'profiles_backup' || backup.profilesBackupFormatVersion !== 1) {
             flashStatus('invalid_file');
             return;
         }
         if (typeof backup.salt !== 'string' || !backup.salt || typeof backup.data !== 'object' || !backup.data) {
+            flashStatus('invalid_file');
+            return;
+        }
+        const backupKdfId = backup && Number.isInteger(backup.kdf) ? backup.kdf : null;
+        if (!backupKdfId || !KDF_CONFIGS[backupKdfId]) {
             flashStatus('invalid_file');
             return;
         }
@@ -768,13 +781,9 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
             return;
         }
 
-        const backupIterations = backup && backup.kdf && typeof backup.kdf.iterations === 'number'
-            ? backup.kdf.iterations
-            : PROFILE_KDF_ITERATIONS;
-
         const tryDecryptWithPassword = async (masterPassword) => {
             try {
-                const key = await deriveProfilesMasterKey(masterPassword, backupSaltBytes, backupIterations);
+                const key = await deriveProfilesMasterKey(masterPassword, backupSaltBytes, backupKdfId);
                 const decrypted = await decryptStringWithKey(key, backup.data);
                 return { key, decrypted, masterPassword };
             } catch {
@@ -839,7 +848,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
 
         const nextSalt = crypto.getRandomValues(new Uint8Array(16));
         localStorage.setItem(ENCRYPTED_PROFILES_SALT_KEY, b64UrlEncodeBytes(nextSalt));
-        const nextKey = await deriveProfilesMasterKey(masterPassword, nextSalt, PROFILE_KDF_ITERATIONS);
+        const nextKey = await deriveProfilesMasterKey(masterPassword, nextSalt);
         localStorage.setItem(ENCRYPTED_PROFILES_CHECK_KEY, JSON.stringify(await encryptStringWithKey(nextKey, 'ok')));
         saveEncryptedProfiles(await Promise.all(restored.map(async (p) => ({
             name: p.name,
@@ -1540,7 +1549,7 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                 return alert(i18n.t('operation_failed'));
             }
             const selectedProfileName = getSelectedProfileName();
-            const payload = { data, formatVersion: 2, profile: encodeProfileName(selectedProfileName) };
+            const payload = { data, savedTextFileFormatVersion: 1, profile: encodeProfileName(selectedProfileName) };
             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -1580,8 +1589,8 @@ export const startUi = ({ i18n, encrypt, decrypt, decodePlaintextFromHash }) => 
                         setStatus('invalid_file');
                         return;
                     }
-                    const { data, profile, formatVersion } = parsed || {};
-                    if (formatVersion !== 2) {
+                    const { data, profile, savedTextFileFormatVersion } = parsed || {};
+                    if (savedTextFileFormatVersion !== 1) {
                         setStatus('invalid_file');
                         return;
                     }
